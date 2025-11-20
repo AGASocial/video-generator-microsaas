@@ -27,18 +27,38 @@ export async function POST(request: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    // Extract the package info from the line items
-    const lineItem = session.line_items?.data[0];
-    if (!lineItem) {
-      return NextResponse.json({ error: "No line items" }, { status: 400 });
+    // Expand line items if not already included
+    let lineItem = session.line_items?.data?.[0];
+    if (!lineItem && session.id) {
+      try {
+        const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ['line_items'],
+        });
+        lineItem = expandedSession.line_items?.data?.[0];
+      } catch (error) {
+        console.error("[v0] Error expanding line items:", error);
+      }
     }
 
-    // Find the matching package by price
-    const packageInfo = CREDIT_PACKAGES.find(
-      (pkg) => pkg.priceInCents === lineItem.price?.unit_amount
-    );
+    // If still no line item, try to get package from metadata
+    let packageInfo;
+    if (lineItem) {
+      // Find the matching package by price
+      packageInfo = CREDIT_PACKAGES.find(
+        (pkg) => pkg.priceInCents === lineItem.price?.unit_amount
+      );
+    } else if (session.metadata?.packageId) {
+      // Fallback to metadata if line items aren't available
+      packageInfo = CREDIT_PACKAGES.find(
+        (pkg) => pkg.id === session.metadata.packageId
+      );
+    }
 
     if (!packageInfo) {
+      console.error("[v0] Package not found", {
+        lineItem: lineItem ? { price: lineItem.price?.unit_amount } : null,
+        metadata: session.metadata,
+      });
       return NextResponse.json({ error: "Package not found" }, { status: 400 });
     }
 

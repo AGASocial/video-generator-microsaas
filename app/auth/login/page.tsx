@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -49,10 +51,17 @@ function LoginForm() {
       router.refresh();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to sign in";
-      setError(errorMessage);
+      // Normalize error messages for better UX
+      let displayError = errorMessage;
+      if (errorMessage.includes("Invalid login credentials") || 
+          errorMessage.includes("Invalid email or password") ||
+          errorMessage.toLowerCase().includes("invalid")) {
+        displayError = "Invalid login credentials";
+      }
+      setError(displayError);
       toast({
         title: "Sign in failed",
-        description: errorMessage,
+        description: displayError,
         variant: "destructive",
       });
     } finally {
@@ -81,7 +90,11 @@ function LoginForm() {
                     placeholder="you@example.com"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError(null); // Clear error when user starts typing
+                    }}
+                    className={error ? "border-destructive" : ""}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -91,11 +104,22 @@ function LoginForm() {
                     type="password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null); // Clear error when user starts typing
+                    }}
+                    className={error ? "border-destructive" : ""}
                   />
                 </div>
                 {error && (
-                  <p className="text-sm text-red-500">{error}</p>
+                  <Alert variant="destructive" role="alert" className="flex items-start gap-3">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <AlertDescription className="flex-1">
+                      {error.includes("Invalid login credentials") || error.includes("Invalid") 
+                        ? "Invalid login credentials. Please check your email and password and try again."
+                        : error}
+                    </AlertDescription>
+                  </Alert>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign in"}

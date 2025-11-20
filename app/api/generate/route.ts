@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCreditCost } from "@/lib/products";
+import { downloadAndStoreVideoFromOpenAI } from "@/lib/video-storage";
 
 // Background polling function for async video generation
 async function pollVideoStatus(videoId: string, soraVideoId: string, maxAttempts = 60) {
@@ -31,18 +32,47 @@ async function pollVideoStatus(videoId: string, soraVideoId: string, maxAttempts
 
       // Check if video is ready
       if (statusData.status === "completed") {
-        // Store proxy URL instead of direct OpenAI URL
-        // The proxy endpoint will handle authentication
-        const proxyUrl = `/api/video/${videoId}/content`;
-        
-        // Update video entry with completed status and proxy URL
-        await supabase
+        // Get user_id from video entry
+        const { data: videoEntry } = await supabase
           .from("video_history")
-          .update({
-            video_url: proxyUrl,
-            status: "completed",
-          })
-          .eq("id", videoId);
+          .select("user_id")
+          .eq("id", videoId)
+          .single();
+
+        if (videoEntry?.user_id) {
+          // Download video from OpenAI and store in Supabase Storage
+          console.log(`[Polling] Downloading and storing video ${videoId} from OpenAI`);
+          const storageResult = await downloadAndStoreVideoFromOpenAI(
+            videoId,
+            soraVideoId,
+            videoEntry.user_id
+          );
+
+          if (storageResult.success) {
+            console.log(`[Polling] Video ${videoId} stored successfully at: ${storageResult.supabaseUrl}`);
+          } else {
+            console.error(`[Polling] Failed to store video ${videoId}:`, storageResult.error);
+            // Fallback: use proxy URL if storage fails
+            const proxyUrl = `/api/video/${videoId}/content`;
+            await supabase
+              .from("video_history")
+              .update({
+                video_url: proxyUrl,
+                status: "completed",
+              })
+              .eq("id", videoId);
+          }
+        } else {
+          // Fallback if user_id not found
+          const proxyUrl = `/api/video/${videoId}/content`;
+          await supabase
+            .from("video_history")
+            .update({
+              video_url: proxyUrl,
+              status: "completed",
+            })
+            .eq("id", videoId);
+        }
         return;
       } else if (statusData.status === "failed") {
         // Update video entry with failed status
@@ -278,23 +308,30 @@ export async function POST(request: NextRequest) {
         .eq("id", videoEntry.id);
 
       if (openaiData.status === "completed") {
-        // Video is already complete - use proxy URL
-        const proxyUrl = `/api/video/${videoEntry.id}/content`;
-        
-        await supabase
-          .from("video_history")
-          .update({
-            video_url: proxyUrl,
-            status: "completed",
-          })
-          .eq("id", videoEntry.id);
+        // Video is already complete - download and store in Supabase
+        console.log(`[Generate] Video ${videoEntry.id} is already complete, storing in Supabase`);
+        const storageResult = await downloadAndStoreVideoFromOpenAI(
+          videoEntry.id,
+          soraVideoId,
+          authUser.id
+        );
+
+        let finalVideoUrl: string;
+        if (storageResult.success && storageResult.supabaseUrl) {
+          finalVideoUrl = storageResult.supabaseUrl;
+          console.log(`[Generate] Video stored successfully at: ${finalVideoUrl}`);
+        } else {
+          // Fallback to proxy URL if storage fails
+          console.warn(`[Generate] Storage failed, using proxy URL as fallback`);
+          finalVideoUrl = `/api/video/${videoEntry.id}/content`;
+        }
 
         return NextResponse.json({
           success: true,
           videoId: videoEntry.id,
           message: "Video generated successfully",
           status: "completed",
-          videoUrl: proxyUrl,
+          videoUrl: finalVideoUrl,
         });
       } else {
         // Video is processing - start background polling

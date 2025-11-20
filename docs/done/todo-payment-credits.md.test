@@ -1,0 +1,19 @@
+✅ FIXED: Payment redirect issue resolved
+
+**Problem:** After completing payment in Stripe, users were not being redirected back to the website.
+
+**Solution:** 
+- Replaced Payment Links with Checkout Sessions for more reliable redirect support
+- Payment Links created via API sometimes don't respect `after_completion` redirects
+- Checkout Sessions with `success_url` and `cancel_url` properly redirect users after payment
+- Updated webhook to handle line items expansion and fallback to metadata
+
+**Changes made:**
+1. Modified `/app/api/checkout/payment-link/route.ts` to use Checkout Sessions instead of Payment Links
+2. Added proper `success_url` and `cancel_url` configuration
+3. Updated webhook to expand line items and fallback to metadata if needed
+
+**Testing:**
+- After payment completion, users should be redirected to `/credits?success=true`
+- PaymentSuccessHandler component will show a success toast
+- Credits will be added to user account via webhook

@@ -3,7 +3,7 @@
  * Centralized class names for consistent styling across the application
  */
 
-import type { CSSClassConstants } from './types'
+import type { CSSClassConstants } from '../types'
 
 export const cssClasses: CSSClassConstants = {
   // Layout

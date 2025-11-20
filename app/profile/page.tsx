@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserExists } from "@/app/actions/user";
 import { Navigation } from "@/components/navigation";
 import { User, VideoHistory } from "@/lib/types";
 import {
@@ -8,9 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download } from 'lucide-react';
+import { VideoList } from "@/components/video-list";
+import { VideoHistoryFilters } from "@/components/video-history-filters";
+import { ThemeSelector } from "@/components/theme-selector";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -35,33 +36,14 @@ export default async function ProfilePage() {
     .eq("id", authData.user.id)
     .single();
 
-  // Auto-create user if doesn't exist
+  // Auto-create user if doesn't exist (fallback if trigger didn't fire)
   if (!userData) {
-    // Use service role to bypass RLS for user creation
-    const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-    const serviceSupabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+    const result = await ensureUserExists(
+      authData.user.id,
+      authData.user.email || ""
     );
-    
-    const { data: newUser, error: createError } = await serviceSupabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email || "",
-        credits: 10,
-      })
-      .select()
-      .single();
 
-    if (createError || !newUser) {
-      console.error("[v0] Failed to create user:", createError);
+    if (!result.success || !result.user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center max-w-md">
@@ -70,18 +52,18 @@ export default async function ProfilePage() {
               Failed to create your account. Please check:
             </p>
             <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-              <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/005_add_users_insert_policy.sql</code></li>
+              <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
               <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
             </ul>
             <p className="text-xs text-muted-foreground mt-4">
-              Error: {createError?.message || "Unknown error"}
+              Error: {result.error || "Unknown error"}
             </p>
           </div>
         </div>
       );
     }
     
-    userData = newUser;
+    userData = result.user;
   }
 
   const { data: videoHistory } = await supabase
@@ -163,69 +145,17 @@ export default async function ProfilePage() {
             </Card>
           </div>
 
+          <ThemeSelector />
+
           <Card>
             <CardHeader>
               <CardTitle>Video History</CardTitle>
               <CardDescription>
-                All your generated videos in one place
+                Complete record of all your generated videos
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {videos.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  No videos generated yet. Start creating your first video!
-                </div>
-              ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {videos.map((video) => (
-                    <Card key={video.id} className="overflow-hidden">
-                      <div className="aspect-video bg-muted">
-                        {video.video_url ? (
-                          <video
-                            src={video.video_url}
-                            className="h-full w-full object-cover"
-                            controls
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <Badge variant="secondary">{video.status}</Badge>
-                          </div>
-                        )}
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="mb-2 flex items-start justify-between gap-2">
-                          <p className="line-clamp-2 text-sm font-medium">
-                            {video.prompt}
-                          </p>
-                          <Badge variant="outline" className="shrink-0">
-                            {video.duration}s
-                          </Badge>
-                        </div>
-                        <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{video.model}</span>
-                          <span>•</span>
-                          <span>
-                            {new Date(video.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {video.video_url && (
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                          >
-                            <a href={video.video_url} download>
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                            </a>
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <VideoHistoryFilters videos={videos} />
             </CardContent>
           </Card>
         </div>

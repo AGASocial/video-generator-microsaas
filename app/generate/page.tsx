@@ -1,7 +1,16 @@
 import { Navigation } from "@/components/navigation";
 import { VideoGeneratorForm } from "@/components/video-generator-form";
+import { VideoList } from "@/components/video-list";
 import { createClient } from "@/lib/supabase/server";
-import { User } from "@/lib/types";
+import { ensureUserExists } from "@/app/actions/user";
+import { User, VideoHistory } from "@/lib/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default async function GeneratePage() {
   try {
@@ -36,74 +45,34 @@ export default async function GeneratePage() {
       .single();
 
     // If user doesn't exist in database, create it automatically
+    // This is a fallback if the database trigger didn't fire
     if (!userData) {
-      try {
-        // Use service role to bypass RLS for user creation
-        const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-        
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-          throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
-        }
-        
-        const serviceSupabase = createServiceClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-        
-        const { data: newUser, error: createError } = await serviceSupabase
-          .from("users")
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email || "",
-            credits: 10, // Default credits for new users
-          })
-          .select()
-          .single();
+      const result = await ensureUserExists(
+        authData.user.id,
+        authData.user.email || ""
+      );
 
-        if (createError || !newUser) {
-          console.error("[v0] Failed to create user:", createError);
-          return (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4">
-              <div className="text-center max-w-md bg-card border rounded-lg p-6">
-                <h1 className="text-2xl font-bold">Account Setup Error</h1>
-                <p className="text-muted-foreground mt-2">
-                  Failed to create your account. Please check:
-                </p>
-                <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-                  <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/005_add_users_insert_policy.sql</code></li>
-                  <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
-                </ul>
-                <p className="text-xs text-muted-foreground mt-4 break-all">
-                  Error: {createError?.message || "Unknown error"}
-                </p>
-              </div>
-            </div>
-          );
-        }
-
-        userData = newUser;
-      } catch (importError) {
-        console.error("[v0] Import or service client error:", importError);
+      if (!result.success || !result.user) {
         return (
           <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="text-center max-w-md bg-card border rounded-lg p-6">
-              <h1 className="text-2xl font-bold">Setup Error</h1>
+              <h1 className="text-2xl font-bold">Account Setup Error</h1>
               <p className="text-muted-foreground mt-2">
-                Failed to initialize user creation service.
+                Failed to create your account. Please check:
               </p>
-              <p className="text-xs text-muted-foreground mt-4">
-                {importError instanceof Error ? importError.message : "Unknown error"}
+              <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
+                <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
+                <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-4 break-all">
+                Error: {result.error || "Unknown error"}
               </p>
             </div>
           </div>
         );
       }
+
+      userData = result.user;
     }
 
     if (!userData) {
@@ -126,12 +95,45 @@ export default async function GeneratePage() {
 
     const user: User = userData;
 
+    // Fetch recently completed or queued videos (last 6) for inspiration
+    const { data: completedVideos } = await supabase
+      .from("video_history")
+      .select("*")
+      .eq("user_id", authData.user.id)
+      .in("status", ["completed", "queued"])
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    const recentVideos: VideoHistory[] = completedVideos || [];
+
     return (
       <div className="min-h-screen bg-background">
         <Navigation user={user} />
         <main className="container mx-auto px-4 py-12">
-          <div className="mx-auto max-w-3xl">
-            <VideoGeneratorForm userCredits={user.credits} />
+          <div className="mx-auto max-w-6xl space-y-8">
+            {/* Video Generator Form */}
+            <div className="max-w-3xl min-w-full">
+              <VideoGeneratorForm userCredits={user.credits} />
+            </div>
+
+            {/* Recent Completed Videos */}
+            {recentVideos.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Recent Creations</CardTitle>
+                  <CardDescription>
+                    Your latest completed videos. Get inspired and create more!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <VideoList 
+                    videos={recentVideos} 
+                    showEmptyMessage={false}
+                    maxVideos={6}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </main>
       </div>

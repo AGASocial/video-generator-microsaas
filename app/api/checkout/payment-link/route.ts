@@ -3,15 +3,6 @@ import { stripe } from "@/lib/stripe";
 import { CREDIT_PACKAGES } from "@/lib/products";
 import { createClient } from "@/lib/supabase/server";
 
-// Option 1: Pre-configured Payment Links
-// Map package IDs to Stripe Payment Link codes
-// You can provide these codes from your Stripe dashboard
-const PAYMENT_LINK_CODES: Record<string, string> = {
-  "starter-pack": process.env.STRIPE_PAYMENT_LINK_STARTER || "",
-  "creator-pack": process.env.STRIPE_PAYMENT_LINK_CREATOR || "",
-  "pro-pack": process.env.STRIPE_PAYMENT_LINK_PRO || "",
-  "enterprise-pack": process.env.STRIPE_PAYMENT_LINK_ENTERPRISE || "",
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,30 +34,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Option 1: Use pre-configured Payment Link URL
-    if (product?.stripePaymentLinkUrl) {
-      // Add user ID and email to Payment Link URL for tracking
-      const separator = product.stripePaymentLinkUrl.includes('?') ? '&' : '?';
-      const paymentLinkUrl = `${product.stripePaymentLinkUrl}${separator}client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email || "")}`;
-      
-      return NextResponse.json({
-        paymentLinkUrl,
-      });
-    }
-
-    // Option 2: Use Payment Link code (fallback)
-    const paymentLinkCode = PAYMENT_LINK_CODES[packageId];
-    if (paymentLinkCode) {
-      // Construct Payment Link URL from code
-      const paymentLinkUrl = `https://buy.stripe.com/${paymentLinkCode}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email || "")}`;
-      
-      return NextResponse.json({
-        paymentLinkUrl,
-      });
-    }
-
-    // Option 2: Create Payment Link dynamically via API
-    const paymentLink = await stripe.paymentLinks.create({
+    // Use Checkout Sessions instead of Payment Links for more reliable redirects
+    // Payment Links created via API sometimes don't respect after_completion redirects
+    const successUrl = new URL("/credits", request.nextUrl.origin);
+    successUrl.searchParams.set("success", "true");
+    
+    const cancelUrl = new URL("/credits", request.nextUrl.origin);
+    
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
       line_items: [
         {
           price_data: {
@@ -80,29 +56,31 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
+      success_url: successUrl.toString(),
+      cancel_url: cancelUrl.toString(),
+      client_reference_id: user.id,
+      customer_email: user.email || undefined,
       metadata: {
         userId: user.id,
         packageId: product.id,
         credits: product.credits.toString(),
       },
-      after_completion: {
-        type: "redirect",
-        redirect: {
-          url: `${request.nextUrl.origin}/credits?success=true`,
-        },
-      },
     });
 
-    // Add user ID to the URL for webhook tracking
-    const paymentLinkUrl = `${paymentLink.url}?client_reference_id=${user.id}&prefilled_email=${encodeURIComponent(user.email || "")}`;
+    console.log("[v0] Checkout Session created:", {
+      sessionId: session.id,
+      successUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
+    });
 
+    // Return the checkout session URL instead of payment link URL
     return NextResponse.json({
-      paymentLinkUrl,
+      paymentLinkUrl: session.url, // Keep the same response format for compatibility
     });
   } catch (error) {
-    console.error("[v0] Payment Link creation error:", error);
+    console.error("[v0] Checkout Session creation error:", error);
     return NextResponse.json(
-      { error: "Failed to create payment link" },
+      { error: "Failed to create checkout session" },
       { status: 500 }
     );
   }

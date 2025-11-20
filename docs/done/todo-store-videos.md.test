@@ -3,11 +3,14 @@
 ## Video Storage & Download Implementation
 
 ### Current Status
-- ⚠️ **Videos are NOT downloaded or stored**
-- ⚠️ Only video URL is stored in database (`video_history.video_url`)
-- ⚠️ Videos remain on external service (OpenAI servers)
-- ⚠️ Risk: Videos could be deleted from external service
-- ✅ Storage bucket exists for images (`video-images`) but not for videos
+- ✅ **Implementation Complete!**
+- ✅ Storage bucket SQL script created (`scripts/006_create_videos_bucket.sql`)
+- ✅ Video storage utility created (`lib/video-storage.ts`)
+- ✅ Webhook endpoint updated to download and store videos
+- ✅ Background polling updated to download and store videos
+- ✅ Videos are now stored in Supabase Storage bucket `videos`
+- ✅ Frontend automatically works (reads `video_url` from database)
+- ⚠️ **ACTION REQUIRED**: Run SQL script to create storage bucket - Done
 
 ### Problem
 When a video is complete:
@@ -24,83 +27,36 @@ When a video is complete:
 - Store Supabase URL in database
 - Videos are permanently stored and accessible
 
-**Option 2: S3/Cloud Storage**
-- Download video from external URL
-- Upload to S3 bucket
-- Store S3 URL in database
-- More scalable for large files
 
 ### Implementation Steps
 
-1. **Create Supabase Storage Bucket for Videos**
-   ```sql
-   -- Create storage bucket for videos
-   insert into storage.buckets (id, name, public)
-   values ('videos', 'videos', true)
-   on conflict (id) do nothing;
-   
-   -- Set up storage policies
-   create policy "Allow authenticated users to upload videos"
-   on storage.objects for insert
-   to authenticated
-   with check (bucket_id = 'videos' and auth.uid()::text = (storage.foldername(name))[1]);
-   
-   create policy "Allow public access to videos"
-   on storage.objects for select
-   to public
-   using (bucket_id = 'videos');
-   ```
+✅ **COMPLETED:**
 
-2. **Update Webhook Endpoint** (`app/api/webhook/video-complete/route.ts`)
-   - Download video from `videoUrl` (external URL)
-   - Upload to Supabase Storage
-   - Store Supabase Storage URL in database
-   - Delete or keep original URL as backup
+1. ✅ **Created Supabase Storage Bucket SQL Script** (`scripts/006_create_videos_bucket.sql`)
+   - Creates `videos` bucket
+   - Sets up RLS policies for upload, read, and delete
+   - **ACTION REQUIRED**: Run this script in your Supabase SQL editor
 
-3. **Update Background Polling** (`app/api/generate/route.ts`)
-   - When polling detects video is ready
-   - Download video from OpenAI URL
-   - Upload to Supabase Storage
-   - Update database with Supabase URL
+2. ✅ **Created Video Storage Utility** (`lib/video-storage.ts`)
+   - `downloadAndStoreVideo()` - Downloads from any external URL and stores in Supabase
+   - `downloadAndStoreVideoFromOpenAI()` - Specifically for OpenAI Sora videos
+   - Handles errors gracefully with fallback
 
-4. **Add Video Download Function**
-   ```typescript
-   async function downloadAndStoreVideo(
-     videoId: string,
-     externalUrl: string,
-     userId: string
-   ) {
-     // 1. Download video from external URL
-     const response = await fetch(externalUrl);
-     const videoBlob = await response.blob();
-     
-     // 2. Upload to Supabase Storage
-     const supabase = await createClient();
-     const fileName = `${userId}/${videoId}.mp4`;
-     
-     const { data, error } = await supabase.storage
-       .from('videos')
-       .upload(fileName, videoBlob, {
-         contentType: 'video/mp4',
-         upsert: false
-       });
-     
-     if (error) throw error;
-     
-     // 3. Get public URL
-     const { data: urlData } = supabase.storage
-       .from('videos')
-       .getPublicUrl(fileName);
-     
-     // 4. Update database with Supabase URL
-     await supabase
-       .from('video_history')
-       .update({ video_url: urlData.publicUrl })
-       .eq('id', videoId);
-     
-     return urlData.publicUrl;
-   }
-   ```
+3. ✅ **Updated Webhook Endpoint** (`app/api/webhook/video-complete/route.ts`)
+   - Downloads video when webhook receives completion
+   - Uploads to Supabase Storage
+   - Updates database with Supabase public URL
+   - Falls back gracefully if storage fails
+
+4. ✅ **Updated Background Polling** (`app/api/generate/route.ts`)
+   - Downloads and stores video when polling detects completion
+   - Handles immediate completion (when video is ready instantly)
+   - Falls back to proxy URL if storage fails
+
+5. ✅ **Frontend** - No changes needed!
+   - Profile page already reads `video_url` from database
+   - Videos will automatically display from Supabase Storage URLs
+   - Download functionality works with Supabase URLs
 
 ### Storage Location Options
 
@@ -164,7 +120,44 @@ Example: `videos/abc123/video-uuid-456.mp4`
    - Implement cleanup for old videos
 
 ### Priority
-🔴 **HIGH** - Videos should be stored permanently, not just referenced
+✅ **IMPLEMENTED** - Videos are now stored permanently in Supabase Storage
+
+### Next Steps
+
+1. **Run SQL Script** (Required):
+   ```bash
+   # Run in Supabase SQL Editor:
+   scripts/006_create_videos_bucket.sql
+   ```
+
+2. **Test the Implementation**:
+   - Generate a new video
+   - Check that it's stored in Supabase Storage bucket `videos`
+   - Verify the `video_url` in database points to Supabase Storage
+   - Confirm video displays correctly in profile page
+
+3. **Monitor Storage Usage**:
+   - Check Supabase dashboard for storage usage
+   - Videos are stored at: `videos/{user_id}/{video_id}.mp4`
+   - Each video is ~5-10MB (8 seconds)
+
+### How It Works
+
+1. **Video Generation**:
+   - User generates video → stored in `video_history` with `status: "processing"`
+   - OpenAI processes video
+
+2. **Video Completion** (via webhook or polling):
+   - System detects video is complete
+   - Calls `downloadAndStoreVideoFromOpenAI()`
+   - Downloads video from OpenAI
+   - Uploads to Supabase Storage: `videos/{user_id}/{video_id}.mp4`
+   - Updates database: `video_url = "https://[project].supabase.co/storage/v1/object/public/videos/..."`
+
+3. **Frontend Display**:
+   - Profile page queries `video_history` table
+   - Displays videos using `video_url` (now Supabase URLs)
+   - Videos are served from Supabase CDN
 
 ---
 

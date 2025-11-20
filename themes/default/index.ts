@@ -3,10 +3,10 @@
  * This is the base theme for the application
  */
 
-import type { ThemeConfig } from './types'
+import type { ThemeConfig } from '../types'
 import { fontConfig } from './fonts'
 
-export const defaultTheme: ThemeConfig = {
+const defaultTheme: ThemeConfig = {
   name: 'default',
   fonts: {
     sans: fontConfig.sans.family,
@@ -84,4 +84,8 @@ export const defaultTheme: ThemeConfig = {
     },
   },
 }
+
+// Export as both named and default for compatibility
+export { defaultTheme }
+export default defaultTheme
 

@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   credits: number;
+  theme_preference?: string;
   created_at: string;
 }
 
