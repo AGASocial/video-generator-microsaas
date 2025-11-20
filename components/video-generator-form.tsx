@@ -299,6 +299,9 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     <SelectItem value="720x1280">Portrait</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Horizontal or vertical video
+                </p>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -312,6 +315,9 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     <SelectItem value="no">No</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Add a sound effect to the video
+                </p>
               </div>
             </div>
 
