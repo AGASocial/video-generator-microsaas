@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Upload, X } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getCreditCost } from "@/lib/products";
+import { Switch, SwitchThumb } from "@radix-ui/react-switch";
 
 interface VideoGeneratorFormProps {
   userCredits: number;
@@ -27,6 +28,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [duration, setDuration] = useState("8"); // Only 8 seconds for now
   const [model, setModel] = useState("sora-2");
   const [dimensions, setDimensions] = useState("1280x720");
+  const [soundEffect, setSoundEffect] = useState("no");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -253,7 +255,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="duration">Duration</Label>
                 <Select value={duration} onValueChange={setDuration} disabled>
@@ -295,6 +297,19 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                   <SelectContent>
                     <SelectItem value="1280x720">Landscape</SelectItem>
                     <SelectItem value="720x1280">Portrait</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sound-effect">Sound Effect</Label>
+                <Select disabled value={soundEffect} onValueChange={setSoundEffect}>
+                  <SelectTrigger id="sound-effect">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
