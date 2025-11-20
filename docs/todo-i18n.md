@@ -1,0 +1,1 @@
+I want to add i18n, as of now English and Spanish
