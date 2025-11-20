@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "dotenv -e .env.dev -- next dev",
     "dev:prod": "dotenv -e .env.prod -- next dev",
+    "generate:themes": "node scripts/generate-theme-registry.js",
+    "prebuild": "npm run generate:themes",
     "build": "next build",
     "build:prod": "dotenv -e .env.prod -- next build",
     "start": "next start",

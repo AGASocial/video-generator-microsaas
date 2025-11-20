@@ -21,8 +21,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      // Provide user-friendly error messages
+      let errorMessage = "Invalid login credentials";
+      
+      if (error.message.includes("Invalid login credentials") || 
+          error.message.includes("Invalid email or password") ||
+          error.message.includes("Email not confirmed")) {
+        errorMessage = "Invalid login credentials";
+      } else if (error.message.includes("Too many requests")) {
+        errorMessage = "Too many login attempts. Please try again later.";
+      } else {
+        // For other errors, use a generic message for security
+        errorMessage = "Invalid login credentials";
+      }
+      
       return NextResponse.json(
-        { error: error.message },
+        { error: errorMessage },
         { status: 401 }
       );
     }

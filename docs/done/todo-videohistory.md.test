@@ -1,0 +1,119 @@
+# Video History UX/UI Decision
+
+## Current State
+- ✅ Profile page shows ALL videos (all statuses: completed, processing, failed)
+- ✅ Generate page only shows the form (no video history)
+
+## Proposed Solution: **Option 3 - Split View**
+
+### Recommendation: Show completed videos in Generate, full history in Profile
+
+**Rationale:**
+1. **Generate Page** - Show recently completed videos (last 5-10)
+   - Provides inspiration while creating new videos
+   - Quick access to recent successful work
+   - Motivates users to see their completed creations
+   - Clean, focused view without clutter
+
+2. **Profile Page** - Show full history with filters
+   - Complete record of all videos (completed, processing, failed)
+   - Filter by status (All, Completed, Processing, Failed)
+   - Better for account management and history review
+   - More comprehensive view for users who want to see everything
+
+### Benefits:
+- ✅ Better UX: Users see their successful videos where they create new ones
+- ✅ Clear separation: Quick view vs. complete history
+- ✅ Motivation: Seeing completed videos encourages more generation
+- ✅ Organization: Failed/processing videos don't clutter the creative space
+
+### Implementation Plan:
+
+1. **Create Reusable Video List Component** (`components/video-list.tsx`)
+   - Accepts videos array and display options
+   - Handles different statuses (completed, processing, failed)
+   - Reusable for both pages
+
+2. **Update Generate Page** (`app/generate/page.tsx`)
+   - Fetch only completed videos (limit 10, most recent)
+   - Show below the form or in a sidebar
+   - Title: "Recent Videos" or "Your Creations"
+
+3. **Update Profile Page** (`app/profile/page.tsx`)
+   - Keep full history but add status filter tabs
+   - Show: All | Completed | Processing | Failed
+   - Better organization and filtering
+
+---
+
+## Alternative Options Considered:
+
+### Option 1: Keep everything in Profile
+- ❌ Users have to navigate away to see their work
+- ❌ Less inspiring when creating new videos
+- ✅ Simple, single location
+
+### Option 2: Move everything to Generate
+- ❌ Clutters the generation page
+- ❌ Failed/processing videos distract from creation
+- ❌ Less organized
+
+### Option 3: Split View (RECOMMENDED) ✅
+- ✅ Best of both worlds
+- ✅ Contextual display based on page purpose
+- ✅ Better user experience
+
+---
+
+## Implementation Status
+
+- [x] ✅ Create reusable `VideoList` component (`components/video-list.tsx`)
+- [x] ✅ Add completed videos section to Generate page (`app/generate/page.tsx`)
+- [x] ✅ Add status filters to Profile page (`components/video-history-filters.tsx`)
+- [x] ✅ Update Profile page to use new filter component
+- [ ] Test both views
+- [ ] Update navigation if needed
+
+## Implementation Details
+
+### Components Created:
+
+1. **`components/video-list.tsx`**
+   - Reusable component for displaying video grids
+   - Handles different video statuses (completed, processing, failed)
+   - Shows appropriate UI for each status (spinner for processing, error icon for failed)
+   - Configurable: max videos, empty messages, styling
+
+2. **`components/video-history-filters.tsx`**
+   - Tab-based filtering component
+   - Filters: All | Completed | Processing | Failed
+   - Shows count badges for each filter
+   - Uses the reusable `VideoList` component
+
+### Pages Updated:
+
+1. **`app/generate/page.tsx`**
+   - Fetches last 6 completed videos
+   - Displays them in a "Your Recent Creations" card below the form
+   - Only shows completed videos (no failed/processing clutter)
+   - Provides inspiration while creating
+
+2. **`app/profile/page.tsx`**
+   - Uses new `VideoHistoryFilters` component
+   - Shows all videos with filter tabs
+   - Complete history with better organization
+   - Users can filter by status to find specific videos
+
+### User Experience:
+
+**Generate Page:**
+- Clean, focused video creation form
+- Recent completed videos shown below for inspiration
+- Motivates users to create more
+- No clutter from failed/processing videos
+
+**Profile Page:**
+- Complete video history
+- Easy filtering by status
+- Better organization and management
+- Full record of all video generation attempts

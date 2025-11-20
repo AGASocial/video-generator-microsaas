@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserExists } from "@/app/actions/user";
 import { Navigation } from "@/components/navigation";
 import { CreditPackages } from "@/components/credit-packages";
+import { PaymentSuccessHandler } from "@/components/payment-success-handler";
 import { User, Transaction } from "@/lib/types";
 import {
   Card,
@@ -9,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Suspense } from "react";
 
 export default async function CreditsPage() {
   const supabase = await createClient();
@@ -33,33 +36,14 @@ export default async function CreditsPage() {
     .eq("id", authData.user.id)
     .single();
 
-  // Auto-create user if doesn't exist
+  // Auto-create user if doesn't exist (fallback if trigger didn't fire)
   if (!userData) {
-    // Use service role to bypass RLS for user creation
-    const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-    const serviceSupabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+    const result = await ensureUserExists(
+      authData.user.id,
+      authData.user.email || ""
     );
-    
-    const { data: newUser, error: createError } = await serviceSupabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email || "",
-        credits: 10,
-      })
-      .select()
-      .single();
 
-    if (createError || !newUser) {
-      console.error("[v0] Failed to create user:", createError);
+    if (!result.success || !result.user) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center max-w-md">
@@ -68,18 +52,18 @@ export default async function CreditsPage() {
               Failed to create your account. Please check:
             </p>
             <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-              <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/005_add_users_insert_policy.sql</code></li>
+              <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
               <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
             </ul>
             <p className="text-xs text-muted-foreground mt-4">
-              Error: {createError?.message || "Unknown error"}
+              Error: {result.error || "Unknown error"}
             </p>
           </div>
         </div>
       );
     }
     
-    userData = newUser;
+    userData = result.user;
   }
 
   const { data: transactions } = await supabase
@@ -95,6 +79,9 @@ export default async function CreditsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation user={user} />
+      <Suspense fallback={null}>
+        <PaymentSuccessHandler />
+      </Suspense>
       <main className="container mx-auto px-4 py-12">
         <div className="mx-auto max-w-6xl space-y-8">
           <div>
