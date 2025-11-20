@@ -1,0 +1,1 @@
+See if videos history should stay in profile or move it to generate, or like keep the last 3 videos in generate and full list of videos in profile. 

@@ -1,0 +1,1 @@
+Check what happens after the user pays, it did not redirect me to the website.
