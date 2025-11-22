@@ -133,17 +133,40 @@ export async function POST(request: NextRequest) {
 
     // Parse form data
     const formData = await request.formData();
-    const prompt = formData.get("prompt") as string;
+    const userPrompt = formData.get("prompt") as string;
     const duration = parseInt(formData.get("duration") as string);
     const model = formData.get("model") as string;
     const size = formData.get("size") as string;
     const imageFile = formData.get("image") as File | null;
 
-    if (!prompt || !duration || !model) {
+    if (!userPrompt || !duration || !model) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    // Fetch active prefix prompt from database
+    let finalPrompt = userPrompt;
+    try {
+      const { data: promptSetting, error: promptError } = await supabase
+        .from("prompt_settings")
+        .select("prefix_prompt")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!promptError && promptSetting?.prefix_prompt) {
+        // Prepend the prefix prompt to the user's prompt
+        finalPrompt = `${promptSetting.prefix_prompt}. ${userPrompt}`;
+        console.log("[Generate] Applied prefix prompt to user input");
+      } else {
+        console.log("[Generate] No active prefix prompt found, using user prompt as-is");
+      }
+    } catch (error) {
+      console.error("[Generate] Error fetching prefix prompt:", error);
+      // Continue with user prompt if prefix fetch fails
     }
 
     // Get credit cost for this model
@@ -191,11 +214,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create video history entry first (before API call)
+    // Store the original user prompt (not the final prompt with prefix)
     const { data: videoEntry, error: videoError } = await supabase
       .from("video_history")
       .insert({
         user_id: authUser.id,
-        prompt,
+        prompt: userPrompt, // Store original user prompt, not the final one with prefix
         image_url: imageFile ? imageFile.name : null,
         duration,
         model,
@@ -245,7 +269,7 @@ export async function POST(request: NextRequest) {
         console.log("[API] Sending request with image reference");
         // Use FormData for requests with images
         const formData = new FormData();
-        formData.append("prompt", prompt);
+        formData.append("prompt", finalPrompt); // Use final prompt with prefix
         formData.append("model", model);
         formData.append("size", size);
         formData.append("seconds", duration.toString());
@@ -273,7 +297,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Use JSON for requests without images
         const requestBody = {
-          prompt: prompt,
+          prompt: finalPrompt, // Use final prompt with prefix
           model: model,
           size: size,
           seconds: duration.toString(), // API expects string, not integer
