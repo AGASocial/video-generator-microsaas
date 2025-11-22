@@ -10,7 +10,8 @@
     "build": "next build",
     "build:prod": "dotenv -e .env.prod -- next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "setup:webhook": "npx tsx scripts/setup-stripe-webhook.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

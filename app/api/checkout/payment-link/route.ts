@@ -38,9 +38,20 @@ export async function POST(request: NextRequest) {
     // Payment Links created via API sometimes don't respect after_completion redirects
     const successUrl = new URL("/credits", request.nextUrl.origin);
     successUrl.searchParams.set("success", "true");
+    // Note: session.id will be added by Stripe after payment, but we'll add it here for reference
+    // Actually, we can't add it here since session doesn't exist yet - we'll get it from the redirect
     
     const cancelUrl = new URL("/credits", request.nextUrl.origin);
     
+    console.log("[CHECKOUT] Creating checkout session...", {
+      userId: user.id,
+      userEmail: user.email,
+      packageId: product.id,
+      packageName: product.name,
+      price: product.priceInCents,
+      credits: product.credits,
+    });
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -65,12 +76,25 @@ export async function POST(request: NextRequest) {
         packageId: product.id,
         credits: product.credits.toString(),
       },
+      // Ensure webhook events are sent
+      payment_intent_data: {
+        metadata: {
+          userId: user.id,
+          packageId: product.id,
+          credits: product.credits.toString(),
+        },
+      },
     });
 
-    console.log("[v0] Checkout Session created:", {
+    console.log("[CHECKOUT] ✅ Checkout Session created:", {
       sessionId: session.id,
+      url: session.url,
       successUrl: successUrl.toString(),
       cancelUrl: cancelUrl.toString(),
+      client_reference_id: session.client_reference_id,
+      metadata: session.metadata,
+      payment_status: session.payment_status,
+      status: session.status,
     });
 
     // Return the checkout session URL instead of payment link URL
