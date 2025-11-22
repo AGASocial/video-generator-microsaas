@@ -11,8 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getTranslations } from 'next-intl/server';
 
 export default async function GeneratePage() {
+  const t = await getTranslations('generate');
   try {
     const supabase = await createClient();
 
@@ -26,8 +28,8 @@ export default async function GeneratePage() {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold">Authentication Error</h1>
-            <p className="text-muted-foreground mt-2">Please try logging in again.</p>
+            <h1 className="text-2xl font-bold">{t('authenticationError')}</h1>
+            <p className="text-muted-foreground mt-2">{t('authenticationErrorDesc')}</p>
             {authError && (
               <p className="text-xs text-muted-foreground mt-4">
                 {authError.message}
@@ -56,16 +58,16 @@ export default async function GeneratePage() {
         return (
           <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <div className="text-center max-w-md bg-card border rounded-lg p-6">
-              <h1 className="text-2xl font-bold">Account Setup Error</h1>
+              <h1 className="text-2xl font-bold">{t('accountSetupError')}</h1>
               <p className="text-muted-foreground mt-2">
-                Failed to create your account. Please check:
+                {t('accountSetupErrorDesc')}
               </p>
               <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-                <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
-                <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
+                <li>{t('accountSetupErrorCheck1')} <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
+                <li>{t('accountSetupErrorCheck2')}</li>
               </ul>
               <p className="text-xs text-muted-foreground mt-4 break-all">
-                Error: {result.error || "Unknown error"}
+                {t('errorLabel')} {result.error || t('unknownError')}
               </p>
             </div>
           </div>
@@ -79,9 +81,9 @@ export default async function GeneratePage() {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <div className="text-center max-w-md bg-card border rounded-lg p-6">
-            <h1 className="text-2xl font-bold">User Not Found</h1>
+            <h1 className="text-2xl font-bold">{t('userNotFound')}</h1>
             <p className="text-muted-foreground mt-2">
-              Unable to load your user profile. Please try refreshing.
+              {t('userNotFoundDesc')}
             </p>
             {userQueryError && (
               <p className="text-xs text-muted-foreground mt-4">
@@ -120,9 +122,9 @@ export default async function GeneratePage() {
             {recentVideos.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Recent Creations</CardTitle>
+                  <CardTitle>{t('yourRecentCreations')}</CardTitle>
                   <CardDescription>
-                    Your latest completed videos. Get inspired and create more!
+                    {t('yourRecentCreationsDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -143,15 +145,16 @@ export default async function GeneratePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md bg-card border rounded-lg p-6">
-          <h1 className="text-2xl font-bold">Unexpected Error</h1>
+          <h1 className="text-2xl font-bold">{t('unexpectedError')}</h1>
           <p className="text-muted-foreground mt-2">
-            Something went wrong. Please try refreshing the page.
+            {t('unexpectedErrorDesc')}
           </p>
           <p className="text-xs text-muted-foreground mt-4">
-            {error instanceof Error ? error.message : "Unknown error"}
+            {error instanceof Error ? error.message : t('unknownError')}
           </p>
         </div>
       </div>
     );
   }
 }
+

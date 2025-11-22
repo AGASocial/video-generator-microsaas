@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Loader2, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface VideoListProps {
   videos: VideoHistory[];
@@ -21,10 +22,13 @@ interface VideoListProps {
 export function VideoList({ 
   videos, 
   showEmptyMessage = true,
-  emptyMessage = "No videos yet",
+  emptyMessage,
   maxVideos,
   className = ""
 }: VideoListProps) {
+  const t = useTranslations('videoList');
+  const tCommon = useTranslations('common');
+  const defaultEmptyMessage = emptyMessage || t('noVideosYet');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   // Limit videos if maxVideos is specified
@@ -72,7 +76,7 @@ export function VideoList({
   if (displayVideos.length === 0 && showEmptyMessage) {
     return (
       <div className="py-12 text-center text-muted-foreground">
-        {emptyMessage}
+        {defaultEmptyMessage}
       </div>
     );
   }
@@ -93,15 +97,15 @@ export function VideoList({
                 {video.status === "processing" ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    <Badge variant="secondary">Processing</Badge>
+                    <Badge variant="secondary">{tCommon('processing')}</Badge>
                   </div>
                 ) : video.status === "failed" ? (
                   <div className="flex flex-col items-center gap-2">
                     <XCircle className="h-8 w-8 text-destructive" />
-                    <Badge variant="destructive">Failed</Badge>
+                    <Badge variant="destructive">{tCommon('failed')}</Badge>
                   </div>
                 ) : (
-                  <Badge variant="secondary">{video.status}</Badge>
+                  <Badge variant="secondary">{tCommon(video.status as any) || video.status}</Badge>
                 )}
               </div>
             )}
@@ -133,12 +137,12 @@ export function VideoList({
                 {downloadingId === video.id ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Downloading...
+                    {tCommon('downloading')}
                   </>
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Download
+                    {tCommon('download')}
                   </>
                 )}
               </Button>

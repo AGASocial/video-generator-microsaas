@@ -27,32 +27,43 @@ export async function updateSession(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Protect routes that require authentication
+  // Extract locale from pathname (e.g., /en/generate or /generate)
+  const pathname = request.nextUrl.pathname;
+  const localeMatch = pathname.match(/^\/(en|es)(\/|$)/);
+  const currentLocale = localeMatch ? localeMatch[1] : null;
+  const pathWithoutLocale = localeMatch 
+    ? pathname.replace(`/${localeMatch[1]}`, '') || '/'
+    : pathname;
+
+  // Protect routes that require authentication (locale-aware)
   const protectedRoutes = ["/generate", "/credits", "/profile"];
   const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathWithoutLocale.startsWith(route)
   );
 
   // Redirect unauthenticated users from protected routes to login
   if (!session && isProtectedRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    // Always include locale prefix (with 'always' mode, even default locale has prefix)
+    url.pathname = `/${currentLocale || 'es'}/auth/login`;
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
   // Redirect authenticated users away from auth pages
   if (session) {
-    if (request.nextUrl.pathname.startsWith("/auth/login")) {
+    if (pathWithoutLocale.startsWith("/auth/login")) {
       const redirect = request.nextUrl.searchParams.get("redirect") || "/generate";
       // Ensure we don't redirect to the same path (prevent loops)
-      if (redirect !== "/auth/login" && redirect !== request.nextUrl.pathname) {
+      if (redirect !== "/auth/login" && redirect !== pathname) {
         const redirectUrl = new URL(redirect, request.url);
         return NextResponse.redirect(redirectUrl);
       }
     }
-    if (request.nextUrl.pathname.startsWith("/auth/sign-up")) {
-      return NextResponse.redirect(new URL("/generate", request.url));
+    if (pathWithoutLocale.startsWith("/auth/sign-up")) {
+      // Always include locale prefix
+      const generatePath = `/${currentLocale || 'es'}/generate`;
+      return NextResponse.redirect(new URL(generatePath, request.url));
     }
   }
 
