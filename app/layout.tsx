@@ -1,14 +1,8 @@
 import type { Metadata } from 'next'
-
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
-import { Toaster } from "@/components/ui/toaster"
-import { ThemeProvider } from "@/components/theme-provider"
-
 import { Inter, JetBrains_Mono } from 'next/font/google'
+import './globals.css'
 
-// Initialize fonts - Next.js requires explicit literal values for weights
-// See themes/fonts.ts for font configuration reference
+// Initialize fonts
 const inter = Inter({ 
   subsets: ['latin'], 
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
@@ -26,45 +20,21 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Sora Video Generator - Create AI Videos',
   description: 'Generate stunning AI videos from text prompts and images using OpenAI Sora',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
+  // Root layout must have html/body tags
+  // The [locale] layout will handle the actual content and locale-specific providers
+  // Default to Spanish since it's our default locale
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
-        <Analytics />
+        {children}
       </body>
     </html>
-  )
+  );
 }

@@ -20,6 +20,7 @@ import { getCreditCost } from "@/lib/products";
 import { Switch, SwitchThumb } from "@radix-ui/react-switch";
 import { ImageCropper } from "@/components/image-cropper";
 import { getImageDimensions, isLandscape, ImageDimensions } from "@/lib/image-utils";
+import { useTranslations } from 'next-intl';
 
 interface PredefinedPrompt {
   id: string;
@@ -34,6 +35,7 @@ interface VideoGeneratorFormProps {
 }
 
 export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
+  const t = useTranslations('form');
   const [prompt, setPrompt] = useState("");
   const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
   const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
@@ -113,8 +115,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
             if (dimensions !== newDimensions) {
               setDimensions(newDimensions);
               toast({
-                title: "Dimensions updated",
-                description: `Dimensions set to ${newDimensions} based on image orientation.`,
+                title: t('dimensionsUpdated'),
+                description: t('dimensionsUpdatedDesc', { dimensions: newDimensions }),
               });
             }
             
@@ -123,8 +125,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
           }).catch((error) => {
             console.error("Error getting image dimensions:", error);
             toast({
-              title: "Error",
-              description: "Failed to load image. Please try again.",
+              title: t('errorLoadingImage'),
+              description: t('errorLoadingImageDesc'),
               variant: "destructive",
             });
           });
@@ -133,8 +135,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
       } catch (error) {
         console.error("Error handling image:", error);
         toast({
-          title: "Error",
-          description: "Failed to process image. Please try again.",
+          title: t('errorProcessingImage'),
+          description: t('errorProcessingImageDesc'),
           variant: "destructive",
         });
       }
@@ -161,8 +163,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
     
     setIsCropperOpen(false);
     toast({
-      title: "Image cropped",
-      description: "Image has been cropped and resized successfully.",
+      title: t('imageCropped'),
+      description: t('imageCroppedDesc'),
     });
   };
 
@@ -177,8 +179,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
     setIsCropperOpen(false);
     
     toast({
-      title: "Image removed",
-      description: "Please upload and crop an image to use it as a reference.",
+      title: t('imageRemoved'),
+      description: t('imageRemovedDesc'),
     });
   };
 
@@ -199,10 +201,11 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
     setVideoUrl(null);
 
     if (userCredits < creditCost) {
-      setError(`Insufficient credits. This model requires ${creditCost} credit${creditCost > 1 ? 's' : ''}. Please purchase more credits.`);
+      const plural = creditCost > 1 ? 's' : '';
+      setError(t('insufficientCreditsError', { cost: creditCost, plural }));
       toast({
-        title: "Insufficient credits",
-        description: `This model requires ${creditCost} credit${creditCost > 1 ? 's' : ''}. You have ${userCredits}.`,
+        title: t('insufficientCredits'),
+        description: t('insufficientCreditsDesc', { cost: creditCost, plural, credits: userCredits }),
         variant: "destructive",
       });
       router.push("/credits");
@@ -230,10 +233,10 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
           setImageFile(finalImageFile);
         } catch (recreateError) {
           console.error("[Form] Failed to recreate file from preview:", recreateError);
-          const errorMsg = "Image preview exists but file is missing. Please upload and crop the image again.";
+          const errorMsg = t('imageErrorDesc');
           setError(errorMsg);
           toast({
-            title: "Image error",
+            title: t('imageError'),
             description: errorMsg,
             variant: "destructive",
           });
@@ -255,10 +258,13 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
           console.log("[Form] Image dimensions:", imageDims, "Target:", { targetWidth, targetHeight });
           
           if (imageDims.width !== targetWidth || imageDims.height !== targetHeight) {
-            const errorMsg = `Image dimensions (${imageDims.width}x${imageDims.height}) don't match selected dimensions (${targetWidth}x${targetHeight}). Please crop the image first.`;
+            const errorMsg = t('dimensionMismatchDesc', { 
+              imageDims: `${imageDims.width}x${imageDims.height}`, 
+              targetDims: `${targetWidth}x${targetHeight}` 
+            });
             setError(errorMsg);
             toast({
-              title: "Dimension mismatch",
+              title: t('dimensionMismatch'),
               description: errorMsg,
               variant: "destructive",
             });
@@ -316,8 +322,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
         setVideoUrl(data.videoUrl);
         setVideoId(data.videoId);
         toast({
-          title: "Video generated successfully",
-          description: "Your video is ready to view and download.",
+          title: t('videoGenerated'),
+          description: t('videoGeneratedDesc'),
         });
         setIsLoading(false);
       } else if (data.status === "processing" && data.videoId) {
@@ -326,8 +332,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
         setIsLoading(false);
         setIsPolling(true);
         toast({
-          title: "Video generation started",
-          description: "Your video is being generated. This may take a few moments.",
+          title: t('videoGenerationStarted'),
+          description: t('videoGenerationStartedDesc'),
         });
         
         // Start polling for status
@@ -335,16 +341,16 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
       } else {
         // Unknown status - redirect to profile
         toast({
-          title: "Video generation started",
-          description: "Check your profile page for updates.",
+          title: t('videoGenerationStarted'),
+          description: t('checkProfile'),
         });
         router.push("/profile");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      const errorMessage = err instanceof Error ? err.message : t('generationFailedDesc');
       setError(errorMessage);
       toast({
-        title: "Generation failed",
+        title: t('generationFailed'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -359,8 +365,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
       if (attempts >= maxAttempts) {
         setIsPolling(false);
         toast({
-          title: "Generation timeout",
-          description: "Video generation is taking longer than expected. Check your profile page.",
+          title: t('generationTimeout'),
+          description: t('generationTimeoutDesc'),
           variant: "destructive",
         });
         router.push("/profile");
@@ -375,15 +381,15 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
           setVideoUrl(data.videoUrl);
           setIsPolling(false);
           toast({
-            title: "Video generated successfully",
-            description: "Your video is ready to view and download.",
+            title: t('videoGenerated'),
+            description: t('videoGeneratedDesc'),
           });
         } else if (data.status === "failed") {
           setIsPolling(false);
-          setError("Video generation failed. Please try again.");
+          setError(t('generationFailedTryAgain'));
           toast({
-            title: "Generation failed",
-            description: "The video generation failed. Please try again.",
+            title: t('generationFailed'),
+            description: t('generationFailedTryAgain'),
             variant: "destructive",
           });
         } else {
@@ -406,20 +412,20 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
     <div className="flex flex-col gap-8">
       <Card>
         <CardHeader>
-          <CardTitle>Generate AI Video</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           <CardDescription>
-            Create stunning videos from text prompts and images
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="prompt">Prompt</Label>
+                <Label htmlFor="prompt">{t('prompt')}</Label>
                 {predefinedPrompts.length > 0 && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
-                    Try a template
+                    {t('tryTemplate')}
                   </span>
                 )}
               </div>
@@ -430,10 +436,10 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                   onValueChange={handlePredefinedPromptChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a template or write your own..." />
+                    <SelectValue placeholder={t('chooseTemplate')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="custom">✍️ Write your own prompt</SelectItem>
+                    <SelectItem value="custom">{t('writeOwnPrompt')}</SelectItem>
                     {predefinedPrompts.map((predefined) => (
                       <SelectItem key={predefined.id} value={predefined.id}>
                         {predefined.title}
@@ -448,8 +454,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                 id="prompt"
                 placeholder={
                   predefinedPrompts.length > 0
-                    ? "Describe the video you want to generate, or select a template above..."
-                    : "Describe the video you want to generate..."
+                    ? t('promptPlaceholder')
+                    : t('promptPlaceholderSimple')
                 }
                 value={prompt}
                 onChange={(e) => {
@@ -465,13 +471,13 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               />
               {selectedPredefinedPrompt && selectedPredefinedPrompt !== "custom" && (
                 <p className="text-xs text-muted-foreground">
-                  Template selected. You can modify the prompt above or choose a different template.
+                  {t('templateSelected')}
                 </p>
               )}
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="image">Reference Image (Optional)</Label>
+              <Label htmlFor="image">{t('referenceImage')}</Label>
               <div className="flex flex-col gap-4">
                 {imagePreview ? (
                   <div className="relative w-full max-w-sm">
@@ -504,7 +510,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                       className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-6 py-8 hover:border-solid"
                     >
                       <Upload className="h-5 w-5" />
-                      <span className="text-sm">Upload an image</span>
+                      <span className="text-sm">{t('uploadImage')}</span>
                     </Label>
                   </div>
                 )}
@@ -513,22 +519,22 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="duration">Duration</Label>
+                <Label htmlFor="duration">{t('duration')}</Label>
                 <Select value={duration} onValueChange={setDuration} disabled>
                   <SelectTrigger id="duration">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="8">8 seconds</SelectItem>
+                    <SelectItem value="8">8 {t('seconds')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Currently only 8-second videos are available
+                  {t('durationNote')}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">{t('model')}</Label>
                 <Select value={model} onValueChange={setModel}>
                   <SelectTrigger id="model">
                     <SelectValue />
@@ -540,12 +546,12 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {creditCost === 1 ? "1 credit" : `${creditCost} credits`} per 8-second video
+                  {t('creditsPerVideo', { count: creditCost, plural: creditCost > 1 ? 's' : '' })}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="dimensions">Dimensions</Label>
+                <Label htmlFor="dimensions">{t('dimensions')}</Label>
                 <Select 
                   value={dimensions} 
                   onValueChange={setDimensions}
@@ -555,37 +561,37 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1280x720">Landscape</SelectItem>
-                    <SelectItem value="720x1280">Portrait</SelectItem>
+                    <SelectItem value="1280x720">{t('landscape')}</SelectItem>
+                    <SelectItem value="720x1280">{t('portrait')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
                   {(originalImageFile || imageFile)
-                    ? "Dimensions locked to match reference image" 
-                    : "Horizontal or vertical video"}
+                    ? t('dimensionsLocked')
+                    : t('dimensionsNote')}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="sound-effect">Sound Effect</Label>
+                <Label htmlFor="sound-effect">{t('soundEffect')}</Label>
                 <Select disabled value={soundEffect} onValueChange={setSoundEffect}>
                   <SelectTrigger id="sound-effect">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="yes">{t('yes')}</SelectItem>
+                    <SelectItem value="no">{t('no')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Add a sound effect to the video
+                  {t('soundEffectNote')}
                 </p>
               </div>
             </div>
 
             {error && (
               <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                <p className="font-medium">Generation failed</p>
+                <p className="font-medium">{t('generationFailed')}</p>
                 <p className="mt-1">{error}</p>
               </div>
             )}
@@ -594,18 +600,18 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               {isLoading || isPolling ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isLoading ? "Submitting..." : "Generating video..."}
+                  {isLoading ? t('submitting') : t('generatingVideo')}
                 </>
               ) : (
-                `Generate Video (${creditCost} credit${creditCost > 1 ? 's' : ''})`
+                t('generateVideo', { cost: creditCost, plural: creditCost > 1 ? 's' : '' })
               )}
             </Button>
 
             {(isLoading || isPolling) && (
               <p className="text-center text-sm text-muted-foreground">
                 {isLoading 
-                  ? "Submitting your request..." 
-                  : "Video generation in progress. This may take up to 45 seconds. Please wait..."}
+                  ? t('submittingRequest')
+                  : t('generationInProgress')}
               </p>
             )}
           </form>
@@ -629,7 +635,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
       {videoUrl && (
         <Card>
           <CardHeader>
-            <CardTitle>Generated Video</CardTitle>
+            <CardTitle>{t('generatedVideo')}</CardTitle>
           </CardHeader>
           <CardContent>
             <video
@@ -637,11 +643,11 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               controls
               className="w-full rounded-lg"
             >
-              Your browser does not support the video tag.
+              {t('videoNotSupported')}
             </video>
             <Button asChild className="mt-4 w-full" variant="outline">
               <a href={videoUrl} download>
-                Download Video
+                {t('downloadVideo')}
               </a>
             </Button>
           </CardContent>
