@@ -97,7 +97,9 @@ export default async function CreditsPage() {
               <CardDescription>Current available credits</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold">{user.credits} credits</div>
+              <div className="text-4xl font-bold" data-credits={user.credits}>
+                {user.credits} credits
+              </div>
             </CardContent>
           </Card>
 
