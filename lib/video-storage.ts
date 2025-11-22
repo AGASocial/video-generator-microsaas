@@ -70,10 +70,13 @@ export async function downloadAndStoreVideo(
 
     console.log(`[Video Storage] Video stored successfully: ${urlData.publicUrl}`);
 
-    // 4. Update database with Supabase URL
+    // 4. Update database with Supabase URL and set status to completed
     const { error: updateError } = await supabase
       .from('video_history')
-      .update({ video_url: urlData.publicUrl })
+      .update({ 
+        video_url: urlData.publicUrl,
+        status: 'completed'
+      })
       .eq('id', videoId);
 
     if (updateError) {
