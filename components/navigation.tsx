@@ -32,9 +32,9 @@ export function Navigation({ user }: NavigationProps) {
 
   return (
     <nav className="border-b bg-background">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
+      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-4 py-4 gap-4 md:gap-0">
         <Link href="/" className="text-xl font-semibold">
-          Sora Video Generator
+          Video Generator
         </Link>
         <div className="flex items-center gap-6">
           {user ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,12 +14,20 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader2, Upload, X, Sparkles } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getCreditCost } from "@/lib/products";
 import { Switch, SwitchThumb } from "@radix-ui/react-switch";
 import { ImageCropper } from "@/components/image-cropper";
 import { getImageDimensions, isLandscape, ImageDimensions } from "@/lib/image-utils";
+
+interface PredefinedPrompt {
+  id: string;
+  title: string;
+  prompt: string;
+  category?: string;
+  description?: string;
+}
 
 interface VideoGeneratorFormProps {
   userCredits: number;
@@ -27,6 +35,9 @@ interface VideoGeneratorFormProps {
 
 export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [prompt, setPrompt] = useState("");
+  const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
+  const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
   const [duration, setDuration] = useState("8"); // Only 8 seconds for now
   const [model, setModel] = useState("sora-2");
   const [dimensions, setDimensions] = useState("1280x720");
@@ -44,6 +55,39 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [isPolling, setIsPolling] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Fetch predefined prompts on component mount
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const response = await fetch("/api/prompts");
+        const data = await response.json();
+        
+        if (data.success && data.prompts) {
+          setPredefinedPrompts(data.prompts);
+        }
+      } catch (error) {
+        console.error("Error fetching predefined prompts:", error);
+      } finally {
+        setIsLoadingPrompts(false);
+      }
+    };
+
+    fetchPrompts();
+  }, []);
+
+  // Handle predefined prompt selection
+  const handlePredefinedPromptChange = (value: string) => {
+    setSelectedPredefinedPrompt(value);
+    if (value === "custom") {
+      setPrompt("");
+    } else {
+      const selected = predefinedPrompts.find((p) => p.id === value);
+      if (selected) {
+        setPrompt(selected.prompt);
+      }
+    }
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -370,16 +414,60 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="prompt">Prompt</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="prompt">Prompt</Label>
+                {predefinedPrompts.length > 0 && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Try a template
+                  </span>
+                )}
+              </div>
+              
+              {predefinedPrompts.length > 0 && (
+                <Select
+                  value={selectedPredefinedPrompt}
+                  onValueChange={handlePredefinedPromptChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a template or write your own..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">✍️ Write your own prompt</SelectItem>
+                    {predefinedPrompts.map((predefined) => (
+                      <SelectItem key={predefined.id} value={predefined.id}>
+                        {predefined.title}
+                        {predefined.description && ` - ${predefined.description}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
               <Textarea
                 id="prompt"
-                placeholder="Describe the video you want to generate..."
+                placeholder={
+                  predefinedPrompts.length > 0
+                    ? "Describe the video you want to generate, or select a template above..."
+                    : "Describe the video you want to generate..."
+                }
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  // If user starts typing, switch to custom mode
+                  if (selectedPredefinedPrompt && selectedPredefinedPrompt !== "custom") {
+                    setSelectedPredefinedPrompt("custom");
+                  }
+                }}
                 required
                 rows={4}
-                className="resize-none"
+                className="resize-none min-h-[120px] md:min-h-[100px]"
               />
+              {selectedPredefinedPrompt && selectedPredefinedPrompt !== "custom" && (
+                <p className="text-xs text-muted-foreground">
+                  Template selected. You can modify the prompt above or choose a different template.
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -423,7 +511,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="duration">Duration</Label>
                 <Select value={duration} onValueChange={setDuration} disabled>
