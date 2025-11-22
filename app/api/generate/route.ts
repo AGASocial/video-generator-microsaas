@@ -50,6 +50,7 @@ async function pollVideoStatus(videoId: string, soraVideoId: string, maxAttempts
 
           if (storageResult.success) {
             console.log(`[Polling] Video ${videoId} stored successfully at: ${storageResult.supabaseUrl}`);
+            // Status is already updated to "completed" by downloadAndStoreVideoFromOpenAI
           } else {
             console.error(`[Polling] Failed to store video ${videoId}:`, storageResult.error);
             // Fallback: use proxy URL if storage fails
@@ -163,9 +164,17 @@ export async function POST(request: NextRequest) {
     let imageBinary: Buffer | null = null;
     let imageMimeType: string | null = null;
     if (imageFile) {
+      console.log("[API] Received image file:", {
+        name: imageFile.name,
+        type: imageFile.type,
+        size: imageFile.size,
+      });
       const arrayBuffer = await imageFile.arrayBuffer();
       imageBinary = Buffer.from(arrayBuffer);
       imageMimeType = imageFile.type || 'image/jpeg';
+      console.log("[API] Image binary size:", imageBinary.length, "bytes");
+    } else {
+      console.log("[API] No image file received");
     }
 
     // Deduct credits based on model
@@ -233,6 +242,7 @@ export async function POST(request: NextRequest) {
       
       // OpenAI Sora API expects multipart/form-data when image is provided
       if (imageBinary && imageFile) {
+        console.log("[API] Sending request with image reference");
         // Use FormData for requests with images
         const formData = new FormData();
         formData.append("prompt", prompt);
@@ -244,7 +254,13 @@ export async function POST(request: NextRequest) {
         // Buffer needs to be converted to Uint8Array for Blob
         const imageUint8Array = new Uint8Array(imageBinary);
         const imageBlob = new Blob([imageUint8Array], { type: imageMimeType || 'image/jpeg' });
-        formData.append("input_reference", imageBlob, imageFile.name || "reference.jpg");
+        const fileName = imageFile.name || "reference.jpg";
+        console.log("[API] Appending image to OpenAI request:", {
+          fileName,
+          blobSize: imageBlob.size,
+          mimeType: imageMimeType,
+        });
+        formData.append("input_reference", imageBlob, fileName);
 
         openaiResponse = await fetch(openaiApiUrl, {
           method: "POST",
@@ -260,7 +276,7 @@ export async function POST(request: NextRequest) {
           prompt: prompt,
           model: model,
           size: size,
-          seconds: duration,
+          seconds: duration.toString(), // API expects string, not integer
         };
 
         openaiResponse = await fetch(openaiApiUrl, {
@@ -320,10 +336,19 @@ export async function POST(request: NextRequest) {
         if (storageResult.success && storageResult.supabaseUrl) {
           finalVideoUrl = storageResult.supabaseUrl;
           console.log(`[Generate] Video stored successfully at: ${finalVideoUrl}`);
+          // Status is already updated to "completed" by downloadAndStoreVideoFromOpenAI
         } else {
           // Fallback to proxy URL if storage fails
           console.warn(`[Generate] Storage failed, using proxy URL as fallback`);
           finalVideoUrl = `/api/video/${videoEntry.id}/content`;
+          // Update status to completed even if storage failed
+          await supabase
+            .from("video_history")
+            .update({
+              video_url: finalVideoUrl,
+              status: "completed",
+            })
+            .eq("id", videoEntry.id);
         }
 
         return NextResponse.json({
