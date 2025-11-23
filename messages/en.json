@@ -1,6 +1,6 @@
 {
   "common": {
-    "videoGenerator": "Video Generator",
+    "videoGenerator": "CCTV Magic",
     "generate": "Generate",
     "credits": "Credits",
     "profile": "Profile",
@@ -26,7 +26,7 @@
     "queued": "Queued"
   },
   "navigation": {
-    "videoGenerator": "Video Generator",
+    "videoGenerator": "CCTV Magic",
     "generate": "Generate",
     "credits": "Credits ({count})",
     "profile": "Profile",
