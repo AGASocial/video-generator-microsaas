@@ -211,6 +211,12 @@
     "signUpSuccessDesc": "Your account has been created. Please check your email to verify your account.",
     "checkEmail": "Check your email",
     "signUpSuccessCheckEmail": "We've sent you a verification email. Please check your inbox and click the verification link to activate your account.",
+    "signInWithGoogle": "Sign in with Google",
+    "orContinueWith": "Or continue with",
+    "googleSignInFailed": "Failed to sign in with Google. Please try again.",
+    "completingSignIn": "Completing sign in...",
+    "pleaseWait": "Please wait while we sign you in",
+    "redirecting": "Redirecting...",
     "common": {
       "email": "Email",
       "password": "Password",
