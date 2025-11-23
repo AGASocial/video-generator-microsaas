@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { ensureUserExists } from "@/app/actions/user";
+import { getCurrentUser, getUserVideos } from "@/lib/api-client";
 import { Navigation } from "@/components/navigation";
 import { User, VideoHistory } from "@/lib/types";
 import {
@@ -12,68 +11,27 @@ import {
 import { VideoList } from "@/components/video-list";
 import { VideoHistoryFilters } from "@/components/video-history-filters";
 import { ThemeSelector } from "@/components/theme-selector";
+import { redirect } from "next/navigation";
+import { routing } from "@/i18n/routing";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-
-  // Middleware already protects this route
-  const { data: authData } = await supabase.auth.getUser();
+  // Fetch user data from API
+  const userResult = await getCurrentUser();
   
-  if (!authData?.user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Authentication Error</h1>
-          <p className="text-muted-foreground mt-2">Please try logging in again.</p>
-        </div>
-      </div>
-    );
+  if (!userResult.success || !userResult.user) {
+    // Redirect to login page with redirect parameter
+    const defaultLocale = routing.defaultLocale;
+    redirect(`/${defaultLocale}/auth/login?redirect=/profile`);
   }
 
-  let { data: userData } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", authData.user.id)
-    .single();
+  const user: User = userResult.user;
 
-  // Auto-create user if doesn't exist (fallback if trigger didn't fire)
-  if (!userData) {
-    const result = await ensureUserExists(
-      authData.user.id,
-      authData.user.email || ""
-    );
-
-    if (!result.success || !result.user) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold">Account Setup Error</h1>
-            <p className="text-muted-foreground mt-2">
-              Failed to create your account. Please check:
-            </p>
-            <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-              <li>Run SQL script: <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
-              <li>Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev</li>
-            </ul>
-            <p className="text-xs text-muted-foreground mt-4">
-              Error: {result.error || "Unknown error"}
-            </p>
-          </div>
-        </div>
-      );
-    }
-    
-    userData = result.user;
-  }
-
-  const { data: videoHistory } = await supabase
-    .from("video_history")
-    .select("*")
-    .eq("user_id", authData.user.id)
-    .order("created_at", { ascending: false });
-
-  const user: User = userData;
-  const videos: VideoHistory[] = videoHistory || [];
+  // Fetch video history from API
+  const videosResult = await getUserVideos({ 
+    order: "created_at", 
+    ascending: false 
+  });
+  const videos: VideoHistory[] = videosResult.videos || [];
 
   return (
     <div className="min-h-screen bg-background">

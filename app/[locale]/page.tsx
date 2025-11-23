@@ -1,28 +1,19 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/api-client";
 import { Sparkles, Video, Zap } from 'lucide-react';
 import { User } from "@/lib/types";
-import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 export default async function HomePage() {
   const t = await getTranslations();
-  const supabase = await createClient();
   let user: User | null = null;
 
-  const { data: authData } = await supabase.auth.getUser();
-  if (authData?.user) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", authData.user.id)
-      .single();
-    
-    if (userData) {
-      user = userData;
-    }
+  // Try to get user data if authenticated (home page doesn't require auth)
+  const userResult = await getCurrentUser();
+  if (userResult.success && userResult.user) {
+    user = userResult.user;
   }
 
   return (

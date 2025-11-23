@@ -25,12 +25,6 @@
     "completed": "Completed",
     "queued": "Queued"
   },
-  "auth": {
-    "common": {
-      "email": "Email",
-      "password": "Password"
-    }
-  },
   "navigation": {
     "videoGenerator": "Video Generator",
     "generate": "Generate",
@@ -52,21 +46,6 @@
     "multipleFormats": "Multiple Formats",
     "multipleFormatsDesc": "Choose duration and quality"
   },
-  "generate": {
-    "title": "Generate Video",
-    "yourRecentCreations": "Your Recent Creations",
-    "yourRecentCreationsDesc": "Your latest completed videos. Get inspired and create more!",
-    "authenticationError": "Authentication Error",
-    "authenticationErrorDesc": "Please try logging in again.",
-    "accountSetupError": "Account Setup Error",
-    "accountSetupErrorDesc": "Failed to create your account. Please check:",
-    "accountSetupErrorCheck1": "Run SQL script:",
-    "accountSetupErrorCheck2": "Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev",
-    "userNotFound": "User Not Found",
-    "userNotFoundDesc": "Unable to load your user profile. Please try refreshing.",
-    "unexpectedError": "Unexpected Error",
-    "unexpectedErrorDesc": "Something went wrong. Please try refreshing the page."
-  },
   "form": {
     "title": "Generate AI Video",
     "description": "Create stunning videos from text prompts and images",
@@ -83,6 +62,7 @@
     "uploadImage": "Upload an image",
     "duration": "Duration",
     "durationNote": "Currently only 8-second videos are available",
+    "second": "second",
     "seconds": "seconds",
     "model": "Model",
     "creditsPerVideo": "{count} credit{plural} per 8-second video",
@@ -166,6 +146,17 @@
     "accountSetupErrorDesc": "Failed to create your account. Please check:",
     "accountSetupErrorCheck1": "Run SQL script:",
     "accountSetupErrorCheck2": "Verify SUPABASE_SERVICE_ROLE_KEY is set in .env.dev"
+  },
+  "creditPackages": {
+    "bestValue": "Best Value",
+    "credits": "{count} credits",
+    "perCredit": "per credit",
+    "videoGenerations": "up to {count} video generations",
+    "allModelsAvailable": "All models available",
+    "noExpiration": "No expiration",
+    "loading": "Loading...",
+    "purchase": "Purchase",
+    "purchaseFailed": "Purchase failed"
   },
   "auth": {
     "signIn": "Sign in",

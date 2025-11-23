@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 const THEME_STORAGE_KEY = 'app-theme-preference'
 const DEFAULT_THEME = 'default'
@@ -10,6 +9,7 @@ export type ThemePreference = string
 
 /**
  * Hook to manage theme preference with localStorage and optional database sync
+ * Uses API routes instead of direct Supabase calls to avoid exposing Supabase URL/keys
  */
 export function useThemePreference() {
   const [theme, setThemeState] = useState<ThemePreference>(DEFAULT_THEME)
@@ -28,29 +28,31 @@ export function useThemePreference() {
   useEffect(() => {
     async function syncWithDatabase() {
       try {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user) {
-          // Try to load from database
-          const { data: userData } = await supabase
-            .from('users')
-            .select('theme_preference')
-            .eq('id', user.id)
-            .single()
+        // Fetch theme preference from API route
+        const response = await fetch('/api/user/theme', {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-          if (userData?.theme_preference) {
-            setThemeState(userData.theme_preference)
-            localStorage.setItem(THEME_STORAGE_KEY, userData.theme_preference)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.theme) {
+            setThemeState(data.theme)
+            localStorage.setItem(THEME_STORAGE_KEY, data.theme)
           } else {
-            // Save current preference to database
+            // If no theme in database, save current localStorage theme
             const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME
-            await supabase
-              .from('users')
-              .update({ theme_preference: currentTheme })
-              .eq('id', user.id)
+            await fetch('/api/user/theme', {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ theme: currentTheme }),
+            })
           }
         }
+        // If unauthorized (401), user is not logged in - just use localStorage
       } catch (error) {
         console.error('Failed to sync theme with database:', error)
       }
@@ -65,16 +67,20 @@ export function useThemePreference() {
     setThemeState(newTheme)
     localStorage.setItem(THEME_STORAGE_KEY, newTheme)
 
-    // Sync with database if user is authenticated
+    // Sync with database via API route
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        await supabase
-          .from('users')
-          .update({ theme_preference: newTheme })
-          .eq('id', user.id)
+      const response = await fetch('/api/user/theme', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ theme: newTheme }),
+      })
+
+      if (!response.ok && response.status !== 401) {
+        // 401 means user is not logged in, which is fine - we still saved to localStorage
+        console.error('Failed to save theme to database:', response.statusText)
       }
     } catch (error) {
       console.error('Failed to save theme to database:', error)

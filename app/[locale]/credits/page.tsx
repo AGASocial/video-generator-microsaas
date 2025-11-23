@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { ensureUserExists } from "@/app/actions/user";
+import { getCurrentUser, getUserTransactions } from "@/lib/api-client";
 import { Navigation } from "@/components/navigation";
 import { CreditPackages } from "@/components/credit-packages";
 import { PaymentSuccessHandler } from "@/components/payment-success-handler";
@@ -14,69 +13,24 @@ import {
 import { Suspense } from "react";
 import { getTranslations } from 'next-intl/server';
 
-export default async function CreditsPage() {
+export default async function CreditsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations('credits');
-  const supabase = await createClient();
-
-  // Middleware already protects this route
-  const { data: authData } = await supabase.auth.getUser();
   
-  if (!authData?.user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">{t('authenticationError')}</h1>
-          <p className="text-muted-foreground mt-2">{t('authenticationErrorDesc')}</p>
-        </div>
-      </div>
-    );
+  // Fetch user data from API (optional - page is public)
+  const userResult = await getCurrentUser();
+  const user: User | null = userResult.success && userResult.user ? userResult.user : null;
+
+  // Fetch transactions from API only if user is authenticated
+  let recentTransactions: Transaction[] = [];
+  if (user) {
+    const transactionsResult = await getUserTransactions({ limit: 10 });
+    recentTransactions = transactionsResult.transactions || [];
   }
-
-  let { data: userData } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", authData.user.id)
-    .single();
-
-  // Auto-create user if doesn't exist (fallback if trigger didn't fire)
-  if (!userData) {
-    const result = await ensureUserExists(
-      authData.user.id,
-      authData.user.email || ""
-    );
-
-    if (!result.success || !result.user) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold">{t('accountSetupError')}</h1>
-            <p className="text-muted-foreground mt-2">
-              {t('accountSetupErrorDesc')}
-            </p>
-            <ul className="text-sm text-muted-foreground mt-4 text-left list-disc list-inside space-y-2">
-              <li>{t('accountSetupErrorCheck1')} <code className="bg-muted px-2 py-1 rounded text-xs">scripts/002_create_user_trigger.sql</code></li>
-              <li>{t('accountSetupErrorCheck2')}</li>
-            </ul>
-            <p className="text-xs text-muted-foreground mt-4">
-              Error: {result.error || "Unknown error"}
-            </p>
-          </div>
-        </div>
-      );
-    }
-    
-    userData = result.user;
-  }
-
-  const { data: transactions } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("user_id", authData.user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const user: User = userData;
-  const recentTransactions: Transaction[] = transactions || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,24 +47,29 @@ export default async function CreditsPage() {
             </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('yourBalance')}</CardTitle>
-              <CardDescription>{t('yourBalanceDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold" data-credits={user.credits}>
-                {t('credits', { count: user.credits })}
-              </div>
-            </CardContent>
-          </Card>
+          {/* User Balance - Only show if authenticated */}
+          {user && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('yourBalance')}</CardTitle>
+                <CardDescription>{t('yourBalanceDesc')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold" data-credits={user.credits}>
+                  {t('credits', { count: user.credits })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Pricing - Always visible */}
           <div>
             <h2 className="mb-6 text-2xl font-semibold">{t('purchaseCredits')}</h2>
             <CreditPackages />
           </div>
 
-          {recentTransactions.length > 0 && (
+          {/* Transaction History - Only show if authenticated and has transactions */}
+          {user && recentTransactions.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>{t('transactionHistory')}</CardTitle>

@@ -46,21 +46,6 @@
     "multipleFormats": "Múltiples Formatos",
     "multipleFormatsDesc": "Elige duración y calidad"
   },
-  "generate": {
-    "title": "Generar Video",
-    "yourRecentCreations": "Tus Creaciones Recientes",
-    "yourRecentCreationsDesc": "Tus últimos videos completados. ¡Inspírate y crea más!",
-    "authenticationError": "Error de Autenticación",
-    "authenticationErrorDesc": "Por favor, intenta iniciar sesión nuevamente.",
-    "accountSetupError": "Error de Configuración de Cuenta",
-    "accountSetupErrorDesc": "No se pudo crear tu cuenta. Por favor verifica:",
-    "accountSetupErrorCheck1": "Ejecuta el script SQL:",
-    "accountSetupErrorCheck2": "Verifica que SUPABASE_SERVICE_ROLE_KEY esté configurado en .env.dev",
-    "userNotFound": "Usuario No Encontrado",
-    "userNotFoundDesc": "No se pudo cargar tu perfil de usuario. Por favor, intenta actualizar la página.",
-    "unexpectedError": "Error Inesperado",
-    "unexpectedErrorDesc": "Algo salió mal. Por favor, intenta actualizar la página."
-  },
   "form": {
     "title": "Generar Video IA",
     "description": "Crea videos impresionantes desde prompts de texto e imágenes",
@@ -77,6 +62,7 @@
     "uploadImage": "Subir una imagen",
     "duration": "Duración",
     "durationNote": "Actualmente solo hay videos de 8 segundos disponibles",
+    "second": "segundo",
     "seconds": "segundos",
     "model": "Modelo",
     "creditsPerVideo": "{count} crédito{plural} por video de 8 segundos",
@@ -161,6 +147,17 @@
     "accountSetupErrorCheck1": "Ejecuta el script SQL:",
     "accountSetupErrorCheck2": "Verifica que SUPABASE_SERVICE_ROLE_KEY esté configurado en .env.dev"
   },
+  "creditPackages": {
+    "bestValue": "Mejor Valor",
+    "credits": "{count} créditos",
+    "perCredit": "por crédito",
+    "videoGenerations": "hasta {count} generaciones de video",
+    "allModelsAvailable": "Todos los modelos disponibles",
+    "noExpiration": "Sin expiración",
+    "loading": "Cargando...",
+    "purchase": "Comprar",
+    "purchaseFailed": "Compra fallida"
+  },
   "auth": {
     "signIn": "Iniciar sesión",
     "signInDesc": "Ingresa tus credenciales para acceder a tu cuenta",
@@ -208,4 +205,3 @@
     "noVideosYet": "Aún no hay videos"
   }
 }
-

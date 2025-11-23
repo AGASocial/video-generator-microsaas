@@ -36,7 +36,8 @@ export async function updateSession(request: NextRequest) {
     : pathname;
 
   // Protect routes that require authentication (locale-aware)
-  const protectedRoutes = ["/generate", "/credits", "/profile"];
+  // Note: /credits is public (users can view pricing without login)
+  const protectedRoutes = ["/generate", "/profile"];
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathWithoutLocale.startsWith(route)
   );

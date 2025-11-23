@@ -40,8 +40,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
   const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
-  const [duration, setDuration] = useState("12"); // 4, 8, 12 seconds
-  const [model, setModel] = useState("sora-2");
+  const [duration, setDuration] = useState("8"); // 4, 8, 12 seconds
+  const [model, setModel] = useState("sora-2-pro");
   const [dimensions, setDimensions] = useState("1280x720");
   const [soundEffect, setSoundEffect] = useState("no");
   const [imageFile, setImageFile] = useState<File | null>(null);
