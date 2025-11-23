@@ -66,7 +66,7 @@ export function CreditPackages() {
                 onClick={() => handlePurchase(pkg.id)}
                 className="w-full mt-auto"
                 variant={pkg.id === "creator-pack" ? "default" : "outline"}
-                disabled={loadingPackage !== null || !pkg.stripePaymentLinkUrl}
+                disabled={loadingPackage !== null}
               >
                 {loadingPackage === pkg.id ? (
                   <>

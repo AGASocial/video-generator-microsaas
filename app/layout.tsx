@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import { GoogleAnalytics } from '@/components/google-analytics'
 
 // Initialize fonts
 const inter = Inter({ 
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+        <GoogleAnalytics />
         {children}
       </body>
     </html>

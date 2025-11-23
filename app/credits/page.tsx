@@ -11,14 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Suspense } from "react";
+import { redirect } from 'next/navigation';
+import { routing } from "@/i18n/routing";
 
 // Force dynamic rendering since we use cookies for authentication
 export const dynamic = 'force-dynamic';
 
 export default async function CreditsPage() {
-  // Fetch user data from API (optional - page is public)
+  // Fetch user data from API - require authentication
   const userResult = await getCurrentUser();
-  const user: User | null = userResult.success && userResult.user ? userResult.user : null;
+  
+  if (!userResult.success || !userResult.user) {
+    // Redirect to login page with redirect parameter
+    const defaultLocale = routing.defaultLocale;
+    redirect(`/${defaultLocale}/auth/login?redirect=/credits`);
+  }
+  
+  const user: User = userResult.user;
 
   // Fetch transactions from API only if user is authenticated
   let recentTransactions: Transaction[] = [];
