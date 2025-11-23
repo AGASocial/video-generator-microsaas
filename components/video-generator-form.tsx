@@ -40,7 +40,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
   const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
-  const [duration, setDuration] = useState("8"); // Only 8 seconds for now
+  const [duration, setDuration] = useState("12"); // 4, 8, 12 seconds
   const [model, setModel] = useState("sora-2");
   const [dimensions, setDimensions] = useState("1280x720");
   const [soundEffect, setSoundEffect] = useState("no");
@@ -520,12 +520,14 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="duration">{t('duration')}</Label>
-                <Select value={duration} onValueChange={setDuration} disabled>
+                <Select value={duration} onValueChange={setDuration}>
                   <SelectTrigger id="duration">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="4">4 {t('second')}</SelectItem>
                     <SelectItem value="8">8 {t('seconds')}</SelectItem>
+                    <SelectItem value="12" defaultValue="12">12 {t('seconds')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">

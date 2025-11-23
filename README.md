@@ -164,13 +164,40 @@ Visit `http://localhost:3000`
 - `status` (string) - Transaction status
 - `created_at` (timestamp)
 
+## Pricing & Cost Analysis
+
+### OpenAI Sora Pricing (Base Costs)
+
+| Model | Output Resolution | Price per Second |
+|-------|------------------|------------------|
+| sora-2 | Portrait: 720x1280<br>Landscape: 1280x720 | $0.10 |
+| sora-2-pro | Portrait: 720x1280<br>Landscape: 1280x720 | $0.30 |
+
+### Our Pricing Structure (2x Markup)
+
+We charge a **2x markup** on OpenAI's base costs. Pricing is based on **12-second videos** to cover all durations (4s, 8s, and 12s).
+
+**Cost Calculation (12 seconds):**
+- **sora-2**: $0.10 × 12 seconds = $1.20 (OpenAI cost) × 2 = **$2.40 per video**
+- **sora-2-pro**: $0.30 × 12 seconds = $3.60 (OpenAI cost) × 2 = **$7.20 per video**
+
+### Credit System
+
+**Credit Value**: 1 credit = $2.40
+
+| Model | Credits per Video | Price | Covers All Durations |
+|-------|------------------|-------|---------------------|
+| sora-2 | 1 credit | $2.40 | 4s, 8s, or 12s |
+| sora-2-pro | 3 credits | $7.20 | 4s, 8s, or 12s |
+
+**Note**: All videos cost the same number of credits regardless of duration (4s, 8s, or 12s), as pricing is based on the maximum 12-second duration.
+
 ## Credit Packages
 
-- **Starter Pack**: $9.99 - 20 credits
-- **Creator Pack**: $19.00 - 45 credits (Best Value)
-- **Pro Pack**: $49.99 - 120 credits
-
-Each video generation costs 1 credit regardless of duration or model.
+- **Starter Pack**: $10.99 - 6 credits (~6 sora-2 videos or 2 sora-2-pro videos)
+- **Creator Pack**: $21.99 - 12 credits (~12 sora-2 videos or 4 sora-2-pro videos) - **Best Value**
+- **Pro Pack**: $45.99 - 25 credits (~25 sora-2 videos or 8 sora-2-pro videos)
+- **Enterprise Pack**: $109.99 - 62 credits (~62 sora-2 videos or 20 sora-2-pro videos)
 
 ## Security
 
@@ -244,9 +271,23 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
 ];
 \`\`\`
 
+Sora Costs
+Portrait: 720x1280 Landscape: 1280x720
+sora-2		  $0.10 / second
+sora-2-pro	$0.30 / second
 ### Modify Credit Costs
 
-Currently, each video costs 1 credit. To change this, update the credit deduction logic in `app/api/generate/route.ts`.
+Credit costs are defined in `lib/products.ts`:
+
+\`\`\`typescript
+export const CREDIT_COSTS = {
+  "sora-2": 1,        // 1 credit = $2.40 (covers 4s, 8s, or 12s)
+  "sora-2-pro": 3,    // 3 credits = $7.20 (covers 4s, 8s, or 12s)
+  "sora-2-pro-HD": 3, // Same as pro
+} as const;
+\`\`\`
+
+To change pricing, update both `CREDIT_COSTS` and `CREDIT_PACKAGES` in `lib/products.ts`.
 
 ### Integrate Real Video Generation
 

@@ -48,7 +48,7 @@
     "aiPowered": "AI Powered",
     "aiPoweredDesc": "Powered by OpenAI's Sora models",
     "fastGeneration": "Fast Generation",
-    "fastGenerationDesc": "Videos ready in under 45 seconds",
+    "fastGenerationDesc": "Videos ready in minutes",
     "multipleFormats": "Multiple Formats",
     "multipleFormatsDesc": "Choose duration and quality"
   },
@@ -98,7 +98,7 @@
     "generatingVideo": "Generating video...",
     "generateVideo": "Generate Video ({cost} credit{plural})",
     "submittingRequest": "Submitting your request...",
-    "generationInProgress": "Video generation in progress. This may take up to 45 seconds. Please wait...",
+    "generationInProgress": "Video generation in progress. This may take up to 2 minutes. Please wait...",
     "generatedVideo": "Generated Video",
     "downloadVideo": "Download Video",
     "videoNotSupported": "Your browser does not support the video tag.",

@@ -42,7 +42,7 @@
     "aiPowered": "Impulsado por IA",
     "aiPoweredDesc": "Impulsado por los modelos Sora de OpenAI",
     "fastGeneration": "Generación Rápida",
-    "fastGenerationDesc": "Videos listos en menos de 45 segundos",
+    "fastGenerationDesc": "Videos listos en minutos",
     "multipleFormats": "Múltiples Formatos",
     "multipleFormatsDesc": "Elige duración y calidad"
   },
@@ -92,7 +92,7 @@
     "generatingVideo": "Generando video...",
     "generateVideo": "Generar Video ({cost} crédito{plural})",
     "submittingRequest": "Enviando tu solicitud...",
-    "generationInProgress": "Generación de video en progreso. Esto puede tardar hasta 45 segundos. Por favor espera...",
+    "generationInProgress": "Generación de video en progreso. Esto puede tardar hasta 2 minutos. Por favor espera...",
     "generatedVideo": "Video Generado",
     "downloadVideo": "Descargar Video",
     "videoNotSupported": "Tu navegador no soporta la etiqueta de video.",
