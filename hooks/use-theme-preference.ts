@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 
 const THEME_STORAGE_KEY = 'app-theme-preference'
-const DEFAULT_THEME = 'default'
+const DEFAULT_THEME = 'christmas'
 
 export type ThemePreference = string
 

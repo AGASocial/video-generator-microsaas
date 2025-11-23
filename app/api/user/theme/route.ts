@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      theme: userData?.theme_preference || "default",
+      theme: userData?.theme_preference || "christmas",
     });
   } catch (error) {
     console.error("[API] Error fetching theme preference:", error);
