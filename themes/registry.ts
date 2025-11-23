@@ -12,6 +12,7 @@ import { defaultTheme } from './default'
 
 // Registry of all available themes (auto-generated)
 export const themeRegistry: Record<string, () => Promise<{ default: ThemeConfig }>> = {
+  christmas: () => import('./christmas'),
   default: () => import('./default'),
 }
 
