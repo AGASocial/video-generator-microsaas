@@ -6,14 +6,31 @@ import { Button } from "@/components/ui/button";
 import { User } from "@/lib/types";
 import { useTranslations } from 'next-intl';
 import { LanguageSwitcher } from './language-switcher';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { routing } from '@/i18n/routing';
 
 interface NavigationProps {
   user: User | null;
 }
 
+const localeNames: Record<string, string> = {
+  es: 'Español',
+  en: 'English',
+};
+
 export function Navigation({ user }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
   const t = useTranslations('navigation');
 
   const handleSignOut = async () => {
@@ -34,13 +51,22 @@ export function Navigation({ user }: NavigationProps) {
     }
   };
 
+  const handleLocaleChange = (newLocale: string) => {
+    const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+    const newPath = `/${newLocale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
+    router.push(newPath);
+    router.refresh();
+  };
+
   return (
     <nav className="border-b bg-background">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-4 py-4 gap-4 md:gap-0">
+      <div className="container mx-auto flex flex-row items-center justify-between px-4 py-4 gap-4">
         <Link href="/" className="text-xl font-semibold">
           {t('videoGenerator')}
         </Link>
-        <div className="flex items-center gap-4">
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-4">
           <LanguageSwitcher />
           <div className="flex items-center gap-6">
             {user ? (
@@ -81,6 +107,79 @@ export function Navigation({ user }: NavigationProps) {
             )}
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="md:hidden">
+            <Button variant="outline" size="icon">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {user ? (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/generate" className="w-full">
+                    {t('generate')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/credits" className="w-full">
+                    {t('credits', { count: user.credits })}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="w-full">
+                    {t('profile')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                {routing.locales.map((loc) => (
+                  <DropdownMenuItem
+                    key={loc}
+                    onClick={() => handleLocaleChange(loc)}
+                    className={locale === loc ? 'bg-accent' : ''}
+                  >
+                    {localeNames[loc]}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  variant="destructive"
+                >
+                  {t('signOut')}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/login" className="w-full">
+                    {t('signIn')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/auth/sign-up" className="w-full">
+                    {t('signUp')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                {routing.locales.map((loc) => (
+                  <DropdownMenuItem
+                    key={loc}
+                    onClick={() => handleLocaleChange(loc)}
+                    className={locale === loc ? 'bg-accent' : ''}
+                  >
+                    {localeNames[loc]}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </nav>
   );

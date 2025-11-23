@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, X, Sparkles } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, Upload, X, Sparkles, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { getCreditCost } from "@/lib/products";
 import { Switch, SwitchThumb } from "@radix-ui/react-switch";
@@ -479,6 +480,13 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
             <div className="flex flex-col gap-2">
               <Label htmlFor="image">{t('referenceImage')}</Label>
               <div className="flex flex-col gap-4">
+              <Alert variant="warning" className="mb-2 px-3 py-2.5 md:px-4 md:py-3">
+                <AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <AlertTitle className="text-xs md:text-sm">{t('noPeopleWarning')}</AlertTitle>
+                <AlertDescription className="text-xs md:text-sm leading-relaxed">
+                  {t('noPeopleWarningDesc')}
+                </AlertDescription>
+              </Alert>
                 {imagePreview ? (
                   <div className="relative w-full max-w-sm">
                     <img
@@ -507,10 +515,10 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     />
                     <Label
                       htmlFor="image"
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-6 py-8 hover:border-solid"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-4 py-6 md:px-6 md:py-8 hover:border-solid transition-colors"
                     >
-                      <Upload className="h-5 w-5" />
-                      <span className="text-sm">{t('uploadImage')}</span>
+                      <Upload className="h-4 w-4 md:h-5 md:w-5" />
+                      <span className="text-xs md:text-sm">{t('uploadImage')}</span>
                     </Label>
                   </div>
                 )}

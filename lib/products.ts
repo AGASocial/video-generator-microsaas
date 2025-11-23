@@ -12,7 +12,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: "starter-pack",
     name: "Starter Pack",
     description: "Perfect for trying out the platform",
-    priceInCents: 1099, // $10.99
+    priceInCents: 1199, // $11.99
     credits: 6, // ~6 sora-2 videos or 2 sora-2-pro videos
     stripePaymentLinkUrl: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_STARTER || "https://buy.stripe.com/aFa4gz2kPfYaeq29li8ww06",
   },
@@ -20,7 +20,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: "creator-pack",
     name: "Creator Pack",
     description: "Best value for regular creators",
-    priceInCents: 2199, // $21.99
+    priceInCents: 2399, // $23.99
     credits: 13, // ~13 sora-2 videos or 4 sora-2-pro videos
     stripePaymentLinkUrl: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_CREATOR || "https://buy.stripe.com/bJe9AT4sX27ka9M9li8ww07",
   },
@@ -28,7 +28,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: "pro-pack",
     name: "Pro Pack",
     description: "For professional content creators",
-    priceInCents: 4599, // $45.99
+    priceInCents: 4799, // $47.99
     credits: 30, // ~30 sora-2 videos or 10 sora-2-pro videos
     stripePaymentLinkUrl: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO || "https://buy.stripe.com/9B67sL1gL5jwdlY8he8ww08",
   },
@@ -36,7 +36,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: "enterprise-pack",
     name: "Enterprise Pack",
     description: "Maximum value for power users",
-    priceInCents: 10999, // $109.99
+    priceInCents: 11199, // $111.99
     credits: 80, // ~80 sora-2 videos or 26 sora-2-pro videos
     stripePaymentLinkUrl: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_ENTERPRISE || "https://buy.stripe.com/5kQaEXbVpfYa3Lo1SQ8ww09",
   },
