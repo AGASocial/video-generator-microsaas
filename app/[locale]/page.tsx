@@ -19,6 +19,8 @@ import { User } from "@/lib/types";
 import { getTranslations } from 'next-intl/server';
 import NextImage from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CREDIT_PACKAGES } from "@/lib/products";
+import { Badge } from "@/components/ui/badge";
 
 // Force dynamic rendering since we use cookies for authentication (optional)
 export const dynamic = 'force-dynamic';
@@ -216,97 +218,152 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Examples Section */}
-        <section id="examples" className="py-16 space-y-12">
+        {/* Pricing with Examples Section */}
+        <section id="pricing" className="py-16 space-y-12">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {t('home.examplesTitle')}
+              {t('home.pricingTitle')}
             </h2>
-            <p className="text-muted-foreground">
-              {t('home.examplesDesc')}
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              {t('home.pricingDesc')}
             </p>
           </div>
-          
-          <div className="grid gap-12 md:grid-cols-1 lg:grid-cols-2 max-w-6xl mx-auto">
-            {/* Example 1: Living Room */}
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>Family Room</CardTitle>
-                <CardDescription>Christmas magic in your living room</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">{t('home.originalImage')}</h4>
-                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
-                    <NextImage
-                      src="/living-room.jpeg"
-                      alt="Living room CCTV original"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">{t('home.aiGeneratedVideo')}</h4>
-                  <div className="relative w-full rounded-lg overflow-hidden border bg-black" style={{ aspectRatio: '16/9' }}>
-                    <video
-                      src="/living-room.mp4"
-                      controls
-                      playsInline
-                      className="w-full h-full"
-                      preload="metadata"
-                      style={{ display: 'block', width: '100%', height: '100%' }}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Example 2: Play Room */}
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>Play Room</CardTitle>
-                <CardDescription>Toys coming to life</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">{t('home.originalImage')}</h4>
-                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
-                    <NextImage
-                      src="/play-room.jpeg"
-                      alt="Play room CCTV original"
-                      fill
-                      className="object-cover"
-                    />
+          {/* Pricing Cards */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+            {CREDIT_PACKAGES.map((pkg) => (
+              <Card
+                key={pkg.id}
+                className={`flex flex-col ${pkg.id === "creator-pack" ? "border-primary border-2" : ""}`}
+              >
+                <CardHeader>
+                  {pkg.id === "creator-pack" && (
+                    <Badge className="mb-2 w-fit" variant="default">
+                      {t('home.bestValue')}
+                    </Badge>
+                  )}
+                  <CardTitle className="text-xl">{pkg.name}</CardTitle>
+                  <CardDescription>{pkg.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4 flex-1">
+                  <div>
+                    <div className="text-3xl font-bold">
+                      ${(pkg.priceInCents / 100).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {pkg.credits} {t('home.perVideo') === 'por video' ? 'créditos' : 'credits'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      ${(pkg.priceInCents / 100 / pkg.credits).toFixed(2)} {t('home.perVideo') === 'por video' ? 'por crédito' : 'per credit'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      ~{Math.floor(pkg.credits / 3)} {t('home.perVideo')}
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">{t('home.aiGeneratedVideo')}</h4>
-                  <div className="relative w-full rounded-lg overflow-hidden border bg-black" style={{ aspectRatio: '16/9' }}>
-                    <video
-                      src="/play-room.mp4"
-                      controls
-                      playsInline
-                      className="w-full h-full"
-                      preload="metadata"
-                      style={{ display: 'block', width: '100%', height: '100%' }}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <Button asChild className="w-full mt-auto" variant={pkg.id === "creator-pack" ? "default" : "outline"}>
+                    <Link href="/credits">
+                      {t('home.getStarted')}
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          <div className="text-center pt-8">
-            <Button size="lg" asChild>
-              <Link href="/generate">
-                {t('home.startGenerating')}
-              </Link>
-            </Button>
+          {/* Examples with Pricing Context */}
+          <div id="examples" className="max-w-6xl mx-auto space-y-8 pt-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold tracking-tight">
+                {t('home.pricingExamplesTitle')}
+              </h3>
+              <p className="text-muted-foreground">
+                {t('home.pricingExamplesDesc')}
+              </p>
+            </div>
+            
+            <div  className="grid gap-12 md:grid-cols-1 lg:grid-cols-2">
+              {/* Example 1: Living Room */}
+              <Card className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle>Family Room</CardTitle>
+                  <CardDescription>Christmas magic in your living room</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">{t('home.originalImage')}</h4>
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
+                      <NextImage
+                        src="/living-room.jpeg"
+                        alt="Living room CCTV original"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">{t('home.aiGeneratedVideo')}</h4>
+                    <div className="relative w-full rounded-lg overflow-hidden border bg-black" style={{ aspectRatio: '16/9' }}>
+                      <video
+                        src="/living-room.mp4"
+                        controls
+                        playsInline
+                        className="w-full h-full"
+                        preload="metadata"
+                        style={{ display: 'block', width: '100%', height: '100%' }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground text-center">
+                      {t('home.startingAt')} $2.00 {t('home.perVideo')} • 1 credit
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Example 2: Play Room */}
+              <Card className="overflow-hidden">
+                <CardHeader>
+                  <CardTitle>Play Room</CardTitle>
+                  <CardDescription>Toys coming to life</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">{t('home.originalImage')}</h4>
+                    <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
+                      <NextImage
+                        src="/play-room.jpeg"
+                        alt="Play room CCTV original"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">{t('home.aiGeneratedVideo')}</h4>
+                    <div className="relative w-full rounded-lg overflow-hidden border bg-black" style={{ aspectRatio: '16/9' }}>
+                      <video
+                        src="/play-room.mp4"
+                        controls
+                        playsInline
+                        className="w-full h-full"
+                        preload="metadata"
+                        style={{ display: 'block', width: '100%', height: '100%' }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground text-center">
+                      {t('home.startingAt')} $2.00 {t('home.perVideo')} • 1 credit
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
       </main>

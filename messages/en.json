@@ -64,10 +64,18 @@
     "step3Desc": "The scene extends while respecting: colors, CCTV noise, lighting, original perspective, real character sizes.",
     "step4Title": "Receive Your Video in under 2 minutes",
     "step4Desc": "Your video is ready to download and share instantly.",
+    "pricingTitle": "Simple, Transparent Pricing",
+    "pricingDesc": "Choose the perfect plan for your needs. All plans include the same powerful AI models.",
+    "pricingExamplesTitle": "See It In Action",
+    "pricingExamplesDesc": "Real examples of CCTV Magic transformations",
     "examplesTitle": "Examples",
     "examplesDesc": "See what's possible with CCTV Magic",
     "originalImage": "Original Image",
-    "aiGeneratedVideo": "AI Generated Video"
+    "aiGeneratedVideo": "AI Generated Video",
+    "perVideo": "per video",
+    "startingAt": "Starting at",
+    "getStarted": "Get Started",
+    "bestValue": "Best Value"
   },
   "form": {
     "title": "Generate AI Video",
