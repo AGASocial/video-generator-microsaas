@@ -606,16 +606,32 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
               </div>
             )}
 
-            <Button type="submit" disabled={isLoading || isPolling || userCredits < creditCost} className="w-full">
-              {isLoading || isPolling ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isLoading ? t('submitting') : t('generatingVideo')}
-                </>
-              ) : (
-                t('generateVideo', { cost: creditCost, plural: creditCost > 1 ? 's' : '' })
-              )}
-            </Button>
+            {userCredits === 0 ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-muted bg-muted/50 p-4 text-sm text-center">
+                  <p className="text-muted-foreground">{t('noCreditsMessage')}</p>
+                </div>
+                <Button 
+                  type="button" 
+                  onClick={() => router.push("/credits")} 
+                  className="w-full"
+                  variant="default"
+                >
+                  {t('buyCredits')}
+                </Button>
+              </div>
+            ) : (
+              <Button type="submit" disabled={isLoading || isPolling || userCredits < creditCost} className="w-full">
+                {isLoading || isPolling ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isLoading ? t('submitting') : t('generatingVideo')}
+                  </>
+                ) : (
+                  t('generateVideo', { cost: creditCost, plural: creditCost > 1 ? 's' : '' })
+                )}
+              </Button>
+            )}
 
             {(isLoading || isPolling) && (
               <p className="text-center text-sm text-muted-foreground">

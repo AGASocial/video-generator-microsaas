@@ -137,7 +137,9 @@
     "noImageSelected": "No image selected",
     "imageSelected": "Image selected",
     "no": "No",
-    "yes": "Yes"
+    "yes": "Yes",
+    "buyCredits": "Buy Credits",
+    "noCreditsMessage": "You need credits to generate videos"
   },
   "generate": {
     "title": "Generate Video",
