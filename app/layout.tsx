@@ -19,8 +19,18 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Sora Video Generator - Create AI Videos',
-  description: 'Generate stunning AI videos from text prompts and images using OpenAI Sora',
+  title: 'CCTV Magic - Transform Your Security Camera Photos into AI Videos',
+  description: 'Transform your security camera photos into fun, realistic, and viral videos with AI',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-light-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon-dark-32x32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 }
 
 export default function RootLayout({
