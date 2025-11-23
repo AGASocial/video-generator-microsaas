@@ -19,11 +19,35 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     async function handleAuth() {
       try {
+        // Check for OAuth error parameters first (Google may redirect with error)
+        const errorParam = searchParams.get("error");
+        const errorDescription = searchParams.get("error_description");
+        
+        if (errorParam) {
+          console.error("OAuth error:", errorParam, errorDescription);
+          let errorMessage = "Authentication failed";
+          
+          // Provide user-friendly error messages
+          if (errorParam === "access_denied") {
+            errorMessage = "Sign in was canceled. Please try again.";
+          } else if (errorParam === "redirect_uri_mismatch") {
+            errorMessage = "Configuration error. Please contact support.";
+          } else if (errorDescription) {
+            errorMessage = errorDescription.replace(/\+/g, " ");
+          }
+          
+          setError(errorMessage);
+          setTimeout(() => {
+            router.replace(`/${locale}/auth/login?error=${encodeURIComponent(errorParam)}`);
+          }, 3000);
+          return;
+        }
+
         // Get the code from URL parameters
         const code = searchParams.get("code");
         
         if (code) {
-          // Exchange the code for a session
+          // Exchange the code for a session using the full URL (Supabase will extract code and code_verifier)
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
@@ -31,29 +55,51 @@ export default function AuthCallbackPage() {
             setError(exchangeError.message);
             setTimeout(() => {
               router.replace(`/${locale}/auth/login?error=callback_error`);
-            }, 2000);
+            }, 3000);
             return;
           }
 
           if (data.session) {
-            // Get the redirect parameter or default to /generate
-            const redirect = searchParams.get("redirect") || `/${locale}/generate`;
+            // Get the redirect destination from sessionStorage (stored before OAuth)
+            const redirect = typeof window !== "undefined" 
+              ? sessionStorage.getItem("auth_redirect") || `/${locale}/generate`
+              : `/${locale}/generate`;
+            
+            // Clear the stored redirect
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("auth_redirect");
+            }
+            
             router.push(redirect);
             router.refresh();
+          } else {
+            setError("No session created");
+            setTimeout(() => {
+              router.replace(`/${locale}/auth/login?error=no_session`);
+            }, 3000);
           }
         } else {
           // Check if there's already a session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (!sessionError && session) {
-            const redirect = searchParams.get("redirect") || `/${locale}/generate`;
+            // Get the redirect destination from sessionStorage
+            const redirect = typeof window !== "undefined" 
+              ? sessionStorage.getItem("auth_redirect") || `/${locale}/generate`
+              : `/${locale}/generate`;
+            
+            // Clear the stored redirect
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("auth_redirect");
+            }
+            
             router.push(redirect);
             router.refresh();
           } else {
             setError("No session found");
             setTimeout(() => {
               router.replace(`/${locale}/auth/login?error=no_session`);
-            }, 2000);
+            }, 3000);
           }
         }
       } catch (err) {
@@ -61,7 +107,7 @@ export default function AuthCallbackPage() {
         setError(err instanceof Error ? err.message : "Unknown error");
         setTimeout(() => {
           router.replace(`/${locale}/auth/login?error=callback_error`);
-        }, 2000);
+        }, 3000);
       }
     }
 

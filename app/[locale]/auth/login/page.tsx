@@ -82,8 +82,14 @@ function LoginForm() {
 
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
+      // Store the redirect destination in sessionStorage (NOT in the callback URL)
       const redirect = searchParams.get("redirect") || `/${locale}/generate`;
-      const redirectTo = `${origin}/${locale}/auth/callback?redirect=${encodeURIComponent(redirect)}`;
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("auth_redirect", redirect);
+      }
+      
+      // Callback URL must be clean - no additional parameters!
+      const redirectTo = `${origin}/${locale}/auth/callback`;
 
       console.log('Google OAuth redirect:', redirectTo);
 
