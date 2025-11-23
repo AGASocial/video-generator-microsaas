@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ImageDimensions, cropAndResizeImage, blobToFile } from "@/lib/image-utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCw } from "lucide-react";
 
 interface ImageCropperProps {
   imageSrc: string;
@@ -24,6 +24,7 @@ interface ImageCropperProps {
   imageDimensions: ImageDimensions;
   isLandscape: boolean;
   targetDimensions: string; // e.g., "1280x720" or "720x1280"
+  onOrientationChange?: (isLandscape: boolean, dimensions: string) => void;
 }
 
 interface Area {
@@ -42,15 +43,27 @@ export function ImageCropper({
   imageDimensions,
   isLandscape,
   targetDimensions,
+  onOrientationChange,
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // State to track current crop orientation (can toggle between landscape and portrait)
+  const [currentIsLandscape, setCurrentIsLandscape] = useState(isLandscape);
 
-  // Calculate aspect ratio from target dimensions (e.g., "1280x720" -> 16/9)
-  const [targetWidth, targetHeight] = targetDimensions.split('x').map(Number);
-  const aspectRatio = targetWidth / targetHeight;
+  // Calculate both aspect ratios
+  const landscapeDimensions = "1280x720";
+  const portraitDimensions = "720x1280";
+  const [landscapeWidth, landscapeHeight] = landscapeDimensions.split('x').map(Number);
+  const [portraitWidth, portraitHeight] = portraitDimensions.split('x').map(Number);
+  const landscapeAspectRatio = landscapeWidth / landscapeHeight; // 16/9
+  const portraitAspectRatio = portraitWidth / portraitHeight; // 9/16
+
+  // Use current orientation to determine aspect ratio and target dimensions
+  const currentAspectRatio = currentIsLandscape ? landscapeAspectRatio : portraitAspectRatio;
+  const currentTargetDimensions = currentIsLandscape ? landscapeDimensions : portraitDimensions;
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -58,8 +71,23 @@ export function ImageCropper({
       setCrop({ x: 0, y: 0 });
       setZoom(1);
       setCroppedAreaPixels(null);
+      setCurrentIsLandscape(isLandscape);
     }
-  }, [isOpen]);
+  }, [isOpen, isLandscape]);
+
+  // Reset crop position when orientation changes
+  const handleToggleOrientation = () => {
+    const newIsLandscape = !currentIsLandscape;
+    setCurrentIsLandscape(newIsLandscape);
+    setCrop({ x: 0, y: 0 });
+    setCroppedAreaPixels(null);
+    
+    // Notify parent component about orientation change
+    if (onOrientationChange) {
+      const newDimensions = newIsLandscape ? landscapeDimensions : portraitDimensions;
+      onOrientationChange(newIsLandscape, newDimensions);
+    }
+  };
 
   const onCropChange = useCallback((crop: { x: number; y: number }) => {
     setCrop(crop);
@@ -83,11 +111,11 @@ export function ImageCropper({
 
     setIsProcessing(true);
     try {
-      // Crop and resize the image to target dimensions
+      // Crop and resize the image to target dimensions (use current orientation)
       const blob = await cropAndResizeImage(
         imageSrc,
         croppedAreaPixels,
-        targetDimensions
+        currentTargetDimensions
       );
 
       // Convert blob to File
@@ -98,7 +126,7 @@ export function ImageCropper({
       );
 
       // Verify the cropped image dimensions
-      const [targetWidth, targetHeight] = targetDimensions.split('x').map(Number);
+      const [targetWidth, targetHeight] = currentTargetDimensions.split('x').map(Number);
       const img = new Image();
       const url = URL.createObjectURL(blob);
       img.onload = () => {
@@ -125,11 +153,11 @@ export function ImageCropper({
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] flex flex-col p-6 gap-4">
         <DialogHeader>
           <DialogTitle>
-            Crop Image - {isLandscape ? "Landscape (16:9)" : "Portrait (9:16)"}
+            Crop Image - {currentIsLandscape ? "Landscape (16:9)" : "Portrait (9:16)"}
           </DialogTitle>
           <DialogDescription>
             Adjust the crop area to select the portion of the image you want to use.
-            The image will be resized to {targetDimensions} pixels.
+            The image will be resized to {currentTargetDimensions} pixels.
           </DialogDescription>
         </DialogHeader>
         
@@ -140,7 +168,7 @@ export function ImageCropper({
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={aspectRatio}
+                aspect={currentAspectRatio}
                 onCropChange={onCropChange}
                 onZoomChange={onZoomChange}
                 onCropComplete={onCropCompleteCallback}
@@ -166,6 +194,18 @@ export function ImageCropper({
         </div>
 
         <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleToggleOrientation}
+              className="flex items-center gap-2"
+              disabled={isProcessing}
+            >
+              <RotateCw className="h-4 w-4" />
+              Switch to {currentIsLandscape ? "Portrait" : "Landscape"}
+            </Button>
+          </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Zoom</label>
             <Slider

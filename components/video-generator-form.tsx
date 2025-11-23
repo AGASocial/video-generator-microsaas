@@ -631,6 +631,9 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
           imageDimensions={imageDimensions}
           isLandscape={isLandscape(imageDimensions)}
           targetDimensions={dimensions}
+          onOrientationChange={(newIsLandscape, newDimensions) => {
+            setDimensions(newDimensions);
+          }}
         />
       )}
 
