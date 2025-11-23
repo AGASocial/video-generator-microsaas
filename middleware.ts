@@ -76,8 +76,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude API routes, static files, and images from middleware
+    // Exclude API routes, static files, images, and videos from middleware
     // The pattern matches all paths except those starting with excluded prefixes
-    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mov)$).*)",
   ],
 };
