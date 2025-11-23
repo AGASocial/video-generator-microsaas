@@ -14,6 +14,9 @@ import { ThemeSelector } from "@/components/theme-selector";
 import { redirect } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function ProfilePage() {
   // Fetch user data from API
   const userResult = await getCurrentUser();

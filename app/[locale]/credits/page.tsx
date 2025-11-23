@@ -13,6 +13,9 @@ import {
 import { Suspense } from "react";
 import { getTranslations } from 'next-intl/server';
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function CreditsPage({
   params,
 }: {

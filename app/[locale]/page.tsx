@@ -6,6 +6,9 @@ import { Sparkles, Video, Zap } from 'lucide-react';
 import { User } from "@/lib/types";
 import { getTranslations } from 'next-intl/server';
 
+// Force dynamic rendering since we use cookies for authentication (optional)
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const t = await getTranslations();
   let user: User | null = null;

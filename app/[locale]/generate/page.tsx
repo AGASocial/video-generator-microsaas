@@ -13,6 +13,9 @@ import {
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function GeneratePage({
   params,
 }: {
