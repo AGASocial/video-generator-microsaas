@@ -11,6 +11,10 @@ import Snowfall from 'react-snowfall'
 export function ChristmasSnowEffect() {
   useEffect(() => {
     console.log('❄️ ChristmasSnowEffect component mounted!')
+    
+    return () => {
+      console.log('❄️ ChristmasSnowEffect component unmounting!')
+    }
   }, [])
 
   return (
@@ -21,13 +25,13 @@ export function ChristmasSnowEffect() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: 2, // Make it very visible first
+        zIndex: 0, // Make it very visible first
         pointerEvents: 'none',
       }}
     >
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <Snowfall
-          snowflakeCount={100}
+          snowflakeCount={50}
           color="#ffffff"
         />
       </div>

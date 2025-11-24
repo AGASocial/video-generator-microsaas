@@ -83,6 +83,7 @@ const defaultTheme: ThemeConfig = {
       sidebarRing: 'oklch(0.439 0 0)',
     },
   },
+
 }
 
 // Export as both named and default for compatibility

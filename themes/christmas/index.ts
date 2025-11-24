@@ -6,6 +6,8 @@
 
 import type { ThemeConfig } from '../types'
 import { fontConfig } from './fonts'
+import { ChristmasSnowEffect } from '@/components/christmas-snow-effect'
+import type React from 'react'
 
 const christmasTheme: ThemeConfig = {
   name: 'christmas',
@@ -94,6 +96,37 @@ const christmasTheme: ThemeConfig = {
       sidebarRing: 'oklch(0.60 0.20 25)',
     },
   },
+  // Theme-specific additional CSS (colors/visual effects only)
+  getAdditionalCSS: (isDark: boolean) => {
+    const backgroundGradient = isDark
+      ? `linear-gradient(135deg, oklch(0.25 0.03 140) 0%, oklch(0.22 0.02 20) 50%, oklch(0.25 0.03 140) 100%)`
+      : `linear-gradient(135deg, oklch(0.98 0.02 140) 0%, oklch(0.99 0.01 20) 50%, oklch(0.98 0.02 140) 100%)`
+
+    return `
+/* Christmas theme background - colors only */
+body {
+  background-image: ${backgroundGradient};
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(220, 38, 38, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+`
+  },
+  // Theme-specific component (snow effect)
+  AdditionalComponent: ChristmasSnowEffect,
 }
 
 // Export as both named and default for compatibility

@@ -134,7 +134,7 @@
     "imageError": "Image error",
     "imageErrorDesc": "Image preview exists but file is missing. Please upload and crop the image again.",
     "videoGenerated": "Video generated successfully!",
-    "videoGeneratedDesc": "Your video is ready to view and download.",
+    "videoGeneratedDesc": "Your video is ready to view and download. Please refresh the page to see the video.",
     "videoGenerationStarted": "Video generation started",
     "videoGenerationStartedDesc": "Your video is being generated. This may take a few moments.",
     "checkProfile": "Check your profile page for updates.",

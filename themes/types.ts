@@ -48,6 +48,10 @@ export interface ThemeConfig {
     sans: string[]
     mono: string[]
   }
+  // Optional: Function to get additional CSS (colors/visual effects only, no layout/positioning)
+  getAdditionalCSS?: (isDark: boolean) => string
+  // Optional: Component to render (e.g., snow effect, particles, etc.)
+  AdditionalComponent?: React.ComponentType
 }
 
 export interface CSSClassConstants {
