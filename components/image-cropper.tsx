@@ -150,8 +150,8 @@ export function ImageCropper({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] flex flex-col p-6 gap-4">
-        <DialogHeader>
+      <DialogContent className="!max-w-4xl !w-[95vw] !h-[90vh] !max-h-[90vh] !top-[5vh] !left-[50%] !translate-x-[-50%] !translate-y-0 flex flex-col p-4 sm:p-6 gap-4 overflow-y-auto">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             Crop Image - {currentIsLandscape ? "Landscape (16:9)" : "Portrait (9:16)"}
           </DialogTitle>
@@ -161,7 +161,7 @@ export function ImageCropper({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="relative w-full flex-shrink-0" style={{ height: "500px" }}>
+        <div className="relative w-full flex-shrink-0" style={{ height: "min(50vh, 400px)" }}>
           <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
             {imageSrc ? (
               <Cropper
@@ -193,7 +193,7 @@ export function ImageCropper({
           </div>
         </div>
 
-        <div className="space-y-4 pt-4">
+        <div className="space-y-4 pt-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <Button
               type="button"
@@ -219,7 +219,7 @@ export function ImageCropper({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button
             type="button"
             variant="outline"
