@@ -20,7 +20,7 @@ export default function AuthCallbackPage() {
         
         if (errorParam) {
           console.error("OAuth error:", errorParam);
-          router.replace(`/${locale}/auth/login?error=${encodeURIComponent(t('oauthError'))}`);
+          router.replace(`/${locale}/auth/login?error=${encodeURIComponent(errorParam)}`);
           return;
         }
 
@@ -28,7 +28,8 @@ export default function AuthCallbackPage() {
         // if the code is present in the URL. The code verifier is stored in cookies
         // by the signInWithOAuth call and retrieved automatically by getSession()
         const { data: { session }, error } = await supabase.auth.getSession();
-
+        console.log('Session:', session);
+        console.log('Error:', error);
         if (!error && session) {
           // Get the redirect destination from sessionStorage (stored before OAuth)
           const redirect = typeof window !== "undefined" 
@@ -41,7 +42,6 @@ export default function AuthCallbackPage() {
           }
           
           router.replace(redirect);
-          router.refresh();
         } else {
           // Handle error (show message, redirect, etc.)
           console.error('Auth callback error:', error);
