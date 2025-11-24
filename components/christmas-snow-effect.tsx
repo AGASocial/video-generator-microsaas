@@ -21,13 +21,13 @@ export function ChristmasSnowEffect() {
         left: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: 2, // Make it very visible first
+        zIndex: 1, // Make it very visible first
         pointerEvents: 'none',
       }}
     >
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <Snowfall
-          snowflakeCount={100}
+          snowflakeCount={50}
           color="#ffffff"
         />
       </div>
