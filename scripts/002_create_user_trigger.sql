@@ -10,7 +10,7 @@ begin
   values (
     new.id,
     new.email,
-    10
+    0
   )
   on conflict (id) do nothing;
 
