@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from "@/lib/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 function LoginForm() {
   const t = useTranslations('auth');
@@ -118,7 +119,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center p-6">
+    <div className="flex min-h-screen w-full items-center justify-center p-6 relative">
+      <div className="absolute top-6 right-6">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
