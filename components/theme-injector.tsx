@@ -19,19 +19,33 @@ export function ThemeInjector() {
     if (typeof window === 'undefined') return
 
     let observer: MutationObserver | null = null
+    let isMounted = true
 
     async function applyTheme() {
       try {
+        console.log('[ThemeInjector] Applying theme:', theme)
         const themeConfig = await getTheme(theme)
+        console.log('[ThemeInjector] Theme config loaded:', themeConfig.name)
+        
+        // Disconnect previous observer if it exists
+        if (observer) {
+          observer.disconnect()
+          observer = null
+        }
+        
         let cssVariables = getThemeCSSVariables(themeConfig)
+        console.log('[ThemeInjector] Base CSS variables generated')
         
         // Add theme-specific additional CSS if the theme provides it
         if (themeConfig.getAdditionalCSS) {
           const isDark = document.documentElement.classList.contains('dark')
           cssVariables += themeConfig.getAdditionalCSS(isDark)
+          console.log('[ThemeInjector] Additional CSS added for theme:', themeConfig.name)
           
           // Update additional CSS when dark mode changes
           observer = new MutationObserver(() => {
+            if (!isMounted) return
+            
             const isDark = document.documentElement.classList.contains('dark')
             const additionalCSS = themeConfig.getAdditionalCSS!(isDark)
             
@@ -49,22 +63,29 @@ export function ThemeInjector() {
         }
         
         // Create or update a style element with the theme CSS
+        if (!isMounted) return
+        
         let styleElement = document.getElementById('theme-styles') as HTMLStyleElement
         
         if (!styleElement) {
           styleElement = document.createElement('style')
           styleElement.id = 'theme-styles'
-          const firstStyle = document.head.querySelector('style')
-          if (firstStyle) {
-            document.head.insertBefore(styleElement, firstStyle.nextSibling)
-          } else {
-            document.head.appendChild(styleElement)
-          }
+          // Insert at the end of head to ensure it overrides base styles
+          document.head.appendChild(styleElement)
+          console.log('[ThemeInjector] Created new style element')
+        } else {
+          // If element exists, move it to the end to ensure it's last in cascade
+          styleElement.remove()
+          document.head.appendChild(styleElement)
         }
         
         styleElement.textContent = cssVariables
+        console.log('[ThemeInjector] Theme CSS applied successfully, length:', cssVariables.length)
+        
+        // Force a reflow to ensure styles are applied
+        void document.documentElement.offsetHeight
       } catch (error) {
-        console.error('Failed to apply theme:', error)
+        console.error('[ThemeInjector] Failed to apply theme:', error)
       }
     }
 
@@ -72,8 +93,10 @@ export function ThemeInjector() {
 
     // Cleanup function
     return () => {
+      isMounted = false
       if (observer) {
         observer.disconnect()
+        observer = null
       }
     }
   }, [theme])
@@ -82,22 +105,42 @@ export function ThemeInjector() {
   const [ThemeComponent, setThemeComponent] = useState<React.ComponentType | null>(null)
   
   useEffect(() => {
+    let isMounted = true
+    
     async function loadThemeComponent() {
       try {
+        console.log('[ThemeInjector] Loading component for theme:', theme)
         const themeConfig = await getTheme(theme)
+        console.log('[ThemeInjector] Theme config loaded, has AdditionalComponent:', !!themeConfig.AdditionalComponent)
+        
+        if (!isMounted) return
+        
         if (themeConfig.AdditionalComponent) {
+          console.log('[ThemeInjector] Setting theme component')
           setThemeComponent(() => themeConfig.AdditionalComponent!)
         } else {
+          console.log('[ThemeInjector] Clearing theme component (theme has no AdditionalComponent)')
           setThemeComponent(null)
         }
       } catch (error) {
-        console.error('Failed to load theme component:', error)
-        setThemeComponent(null)
+        console.error('[ThemeInjector] Failed to load theme component:', error)
+        if (isMounted) {
+          setThemeComponent(null)
+        }
       }
     }
+    
+    // Clear component immediately when theme changes
+    setThemeComponent(null)
     loadThemeComponent()
+    
+    return () => {
+      isMounted = false
+      setThemeComponent(null)
+    }
   }, [theme])
   
-  return ThemeComponent ? <ThemeComponent /> : null
+  console.log('[ThemeInjector] Rendering, ThemeComponent:', ThemeComponent ? 'present' : 'null', 'theme:', theme)
+  return ThemeComponent ? <ThemeComponent key={theme} /> : null
 }
 
