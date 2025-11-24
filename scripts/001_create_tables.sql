@@ -2,7 +2,7 @@
   create table if not exists public.users (
     id uuid primary key references auth.users(id) on delete cascade,
     email text not null,
-    credits integer not null default 10,
+    credits integer not null default 0,
     created_at timestamp with time zone default now()
   );
 
