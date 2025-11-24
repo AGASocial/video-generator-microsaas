@@ -44,7 +44,7 @@ export async function ensureUserExists(userId: string, email: string) {
       .insert({
         id: userId,
         email: email,
-        credits: 10, // Default credits for new users
+        credits: 0, // Default credits for new users
       })
       .select()
       .single();
