@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   description: 'Transform your security camera photos into fun, realistic, and viral videos with AI',
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.png', type: 'image/png' },
       { url: '/icon-light-32x32.png', type: 'image/png', sizes: '32x32' },
       { url: '/icon-dark-32x32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: dark)' },
     ],
