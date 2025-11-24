@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { getTranslations } from 'next-intl/server';
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { PaymentSuccessHandler } from "@/components/payment-success-handler";
 
 // Force dynamic rendering since we use cookies for authentication
 export const dynamic = 'force-dynamic';
@@ -23,10 +25,10 @@ export default async function GeneratePage({
 }) {
   const { locale } = await params;
   const t = await getTranslations('generate');
-  
+
   // Check authentication first (before try-catch to avoid catching redirect errors)
   const userResult = await getCurrentUser();
-  
+
   if (!userResult.success || !userResult.user) {
     // Redirect to login page with redirect parameter
     redirect(`/${locale}/auth/login?redirect=/${locale}/generate`);
@@ -42,6 +44,9 @@ export default async function GeneratePage({
     return (
       <div className="min-h-screen bg-background">
         <Navigation user={user} />
+        <Suspense fallback={null}>
+          <PaymentSuccessHandler />
+        </Suspense>
         <main className="container mx-auto px-4 py-12">
           <div className="mx-auto max-w-6xl space-y-8">
             {/* Video Generator Form */}
@@ -59,8 +64,8 @@ export default async function GeneratePage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <VideoList 
-                    videos={recentVideos} 
+                  <VideoList
+                    videos={recentVideos}
                     showEmptyMessage={false}
                     maxVideos={6}
                   />

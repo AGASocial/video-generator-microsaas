@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { CREDIT_PACKAGES } from "@/lib/products";
 import { createClient } from "@/lib/supabase/server";
+import { routing } from "@/i18n/routing";
 
 
 export async function POST(request: NextRequest) {
@@ -34,14 +35,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Extract locale from referer header or use default
+    let locale: string = routing.defaultLocale;
+    const referer = request.headers.get('referer');
+    if (referer) {
+      try {
+        const refererUrl = new URL(referer);
+        const pathname = refererUrl.pathname;
+        const localeMatch = pathname.match(/^\/(en|es)(\/|$)/);
+        if (localeMatch && routing.locales.includes(localeMatch[1] as any)) {
+          locale = localeMatch[1];
+        }
+      } catch (error) {
+        console.warn('[CHECKOUT] Failed to parse referer URL:', error);
+      }
+    }
+    
     // Use Checkout Sessions instead of Payment Links for more reliable redirects
     // Payment Links created via API sometimes don't respect after_completion redirects
-    const successUrl = new URL("/credits", request.nextUrl.origin);
+    // Use locale-aware redirect URL
+    const successUrl = new URL(`/${locale}/generate`, request.nextUrl.origin);
     successUrl.searchParams.set("success", "true");
     // Note: session.id will be added by Stripe after payment, but we'll add it here for reference
     // Actually, we can't add it here since session doesn't exist yet - we'll get it from the redirect
     
-    const cancelUrl = new URL("/credits", request.nextUrl.origin);
+    const cancelUrl = new URL(`/${locale}/credits`, request.nextUrl.origin);
     
     console.log("[CHECKOUT] Creating checkout session...", {
       userId: user.id,
