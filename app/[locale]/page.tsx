@@ -13,7 +13,8 @@ import {
   Play,
   Image as ImageIcon,
   Gift,
-  Laugh
+  Laugh,
+  MessageCircle
 } from 'lucide-react';
 import { User } from "@/lib/types";
 import { getTranslations } from 'next-intl/server';
@@ -81,6 +82,21 @@ export default async function HomePage() {
                   <Play className="mr-2 h-4 w-4" />
                   {t('home.viewExamples')}
                 </Link>
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                asChild
+              >
+                <a 
+                  href="https://wa.me/16574145114?text=Help%20me%20with%20CCTV%20Magic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  {t('home.contactSupportWhatsApp')}
+                </a>
               </Button>
             </div>
           </div>
