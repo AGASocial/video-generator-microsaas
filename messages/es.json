@@ -134,7 +134,7 @@
     "imageError": "Error de imagen",
     "imageErrorDesc": "La vista previa de la imagen existe pero falta el archivo. Por favor, sube y recorta la imagen nuevamente.",
     "videoGenerated": "¡Video generado exitosamente!",
-    "videoGeneratedDesc": "Tu video está listo para ver y descargar.",
+    "videoGeneratedDesc": "Tu video está listo para ver y descargar. Por favor refresca la página para ver el video.",
     "videoGenerationStarted": "Generación de video iniciada",
     "videoGenerationStartedDesc": "Tu video está siendo generado. Esto puede tardar unos momentos.",
     "checkProfile": "Revisa tu página de perfil para actualizaciones.",
