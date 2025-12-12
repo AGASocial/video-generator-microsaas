@@ -10,50 +10,47 @@ export const dynamic = "force-dynamic";
 function verifyOpenAIWebhookSignature(
   payload: string,
   signature: string,
+  timestamp: string,
   secret: string
 ): boolean {
   try {
-    // OpenAI webhook signature format: "v1=hash" or "timestamp,hash"
-    // We'll try both formats
-    const parts = signature.split(",");
+    // OpenAI webhook signature format:
+    // 1. Get timestamp from OpenAI-Timestamp header
+    // 2. Concatenate: timestamp + "." + payload
+    // 3. Compute HMAC-SHA256 of the concatenated string
+    // 4. Compare with signature (hex format)
     
-    if (parts.length === 2) {
-      // Format: "timestamp,hash"
-      const [timestamp, hash] = parts;
-      const signedPayload = `${timestamp}.${payload}`;
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(signedPayload)
-        .digest("hex");
-      
-      return crypto.timingSafeEqual(
-        Buffer.from(hash),
-        Buffer.from(expectedSignature)
-      );
-    } else if (signature.startsWith("v1=")) {
-      // Format: "v1=hash"
-      const hash = signature.substring(3);
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(payload)
-        .digest("hex");
-      
-      return crypto.timingSafeEqual(
-        Buffer.from(hash),
-        Buffer.from(expectedSignature)
-      );
-    } else {
-      // Try direct HMAC of payload
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(payload)
-        .digest("hex");
-      
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expectedSignature)
-      );
+    if (!timestamp) {
+      console.error("[Webhook] Missing timestamp for signature verification");
+      return false;
     }
+    
+    // Validate timestamp to prevent replay attacks (within 5 minutes)
+    const timestampNum = parseInt(timestamp, 10);
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeDifference = Math.abs(currentTime - timestampNum);
+    const fiveMinutes = 5 * 60; // 5 minutes in seconds
+    
+    if (timeDifference > fiveMinutes) {
+      console.error(`[Webhook] Timestamp too old or too far in future. Difference: ${timeDifference}s`);
+      return false;
+    }
+    
+    // Construct the signed payload: timestamp.payload
+    const signedPayload = `${timestamp}.${payload}`;
+    
+    // Compute the expected signature using HMAC-SHA256
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(signedPayload)
+      .digest("hex");
+    
+    // Compare signatures using timing-safe comparison
+    // Signature should be in hex format
+    return crypto.timingSafeEqual(
+      Buffer.from(signature, "hex"),
+      Buffer.from(expectedSignature, "hex")
+    );
   } catch (error) {
     console.error("[Webhook] Signature verification error:", error);
     return false;
@@ -65,29 +62,61 @@ export async function POST(request: NextRequest) {
     // Get raw body for signature verification
     const body = await request.text();
     
-    // Get signature from headers (OpenAI typically uses 'openai-signature' or 'x-openai-signature')
+    // Log all headers for debugging
+    const allHeaders: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      allHeaders[key] = value;
+    });
+    console.log("[Webhook] All headers:", allHeaders);
+    
+    // Get signature and timestamp from headers (OpenAI uses OpenAI-Signature and OpenAI-Timestamp)
     const signature = 
       request.headers.get("openai-signature") ||
-      request.headers.get("x-openai-signature") ||
       request.headers.get("OpenAI-Signature") ||
+      request.headers.get("x-openai-signature") ||
       request.headers.get("X-OpenAI-Signature");
     
+    const timestamp = 
+      request.headers.get("openai-timestamp") ||
+      request.headers.get("OpenAI-Timestamp") ||
+      request.headers.get("x-openai-timestamp") ||
+      request.headers.get("X-OpenAI-Timestamp");
+    
+    console.log("[Webhook] Signature header found:", signature ? "yes" : "no");
+    console.log("[Webhook] Signature value:", signature ? `${signature.substring(0, 20)}...` : "missing");
+    console.log("[Webhook] Timestamp header found:", timestamp ? "yes" : "no");
+    console.log("[Webhook] Timestamp value:", timestamp || "missing");
+    
     const webhookSecret = process.env.OPENAI_WEBHOOK_SECRET;
+    console.log("[Webhook] Secret configured:", !!webhookSecret);
+    console.log("[Webhook] Secret length:", webhookSecret?.length || 0);
     
     // Verify signature if secret is configured
     if (webhookSecret) {
       if (!signature) {
-        console.error("[Webhook] Missing signature header");
+        console.error("[Webhook] Missing signature header. Available headers:", Object.keys(allHeaders));
         return NextResponse.json(
           { error: "Missing signature header" },
           { status: 401 }
         );
       }
       
-      const isValid = verifyOpenAIWebhookSignature(body, signature, webhookSecret);
+      if (!timestamp) {
+        console.error("[Webhook] Missing timestamp header. Available headers:", Object.keys(allHeaders));
+        return NextResponse.json(
+          { error: "Missing timestamp header" },
+          { status: 401 }
+        );
+      }
+      
+      const isValid = verifyOpenAIWebhookSignature(body, signature, timestamp, webhookSecret);
       
       if (!isValid) {
         console.error("[Webhook] ❌ Signature verification failed");
+        console.error("[Webhook] Body length:", body.length);
+        console.error("[Webhook] Body preview:", body.substring(0, 100));
+        console.error("[Webhook] Signature:", signature.substring(0, 50));
+        console.error("[Webhook] Timestamp:", timestamp);
         return NextResponse.json(
           { error: "Invalid signature" },
           { status: 401 }
