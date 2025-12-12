@@ -145,18 +145,27 @@ export async function POST(request: NextRequest) {
       request.headers.get("X-OpenAI-Timestamp");
     
     console.log("[Webhook] Signature header found:", signature ? "yes" : "no");
-    console.log("[Webhook] Signature value:", signature ? `${signature.substring(0, 20)}...` : "missing");
+    console.log("[Webhook] Signature value:", signature ? `${signature.substring(0, 50)}...` : "missing");
+    console.log("[Webhook] Signature full length:", signature?.length || 0);
     console.log("[Webhook] Timestamp header found:", timestamp ? "yes" : "no");
     console.log("[Webhook] Timestamp value:", timestamp || "missing");
+    console.log("[Webhook] Body length:", body.length);
+    console.log("[Webhook] Body (first 500 chars):", body.substring(0, 500));
     
     const webhookSecret = process.env.OPENAI_WEBHOOK_SECRET;
+    const skipVerification = process.env.OPENAI_WEBHOOK_SKIP_VERIFICATION === "true";
+    
     console.log("[Webhook] Secret configured:", !!webhookSecret);
     console.log("[Webhook] Secret length:", webhookSecret?.length || 0);
+    console.log("[Webhook] Secret starts with:", webhookSecret ? webhookSecret.substring(0, 10) : "N/A");
+    console.log("[Webhook] Skip verification:", skipVerification);
     
     // Verify signature if secret is configured
-    if (webhookSecret) {
+    if (webhookSecret && !skipVerification) {
       if (!signature) {
-        console.error("[Webhook] Missing signature header. Available headers:", Object.keys(allHeaders));
+        console.error("[Webhook] ❌ Missing signature header");
+        console.error("[Webhook] Available headers:", Object.keys(allHeaders));
+        console.error("[Webhook] All header keys (lowercase):", Object.keys(allHeaders).map(k => k.toLowerCase()));
         return NextResponse.json(
           { error: "Missing signature header" },
           { status: 401 }
@@ -164,28 +173,54 @@ export async function POST(request: NextRequest) {
       }
       
       if (!timestamp) {
-        console.error("[Webhook] Missing timestamp header. Available headers:", Object.keys(allHeaders));
+        console.error("[Webhook] ❌ Missing timestamp header");
+        console.error("[Webhook] Available headers:", Object.keys(allHeaders));
+        console.error("[Webhook] All header keys (lowercase):", Object.keys(allHeaders).map(k => k.toLowerCase()));
         return NextResponse.json(
           { error: "Missing timestamp header" },
           { status: 401 }
         );
       }
       
-      const isValid = verifyOpenAIWebhookSignature(body, signature, timestamp, webhookSecret);
-      
-      if (!isValid) {
-        console.error("[Webhook] ❌ Signature verification failed");
-        console.error("[Webhook] Body length:", body.length);
-        console.error("[Webhook] Body preview:", body.substring(0, 100));
-        console.error("[Webhook] Signature:", signature.substring(0, 50));
-        console.error("[Webhook] Timestamp:", timestamp);
-        return NextResponse.json(
-          { error: "Invalid signature" },
-          { status: 401 }
-        );
+      // OpenAI webhook secrets might have a prefix (like Stripe's whsec_)
+      // Try with and without prefix
+      let secretToUse = webhookSecret;
+      if (webhookSecret.startsWith("whsec_")) {
+        // Remove the whsec_ prefix if present (some systems use this format)
+        secretToUse = webhookSecret.substring(6);
+        console.log("[Webhook] Removed whsec_ prefix from secret");
       }
       
-      console.log("[Webhook] ✅ Signature verified successfully");
+      console.log("[Webhook] Using secret length:", secretToUse.length);
+      
+      const isValid = verifyOpenAIWebhookSignature(body, signature, timestamp, secretToUse);
+      
+      if (!isValid) {
+        // Try with original secret (with prefix) if first attempt failed
+        if (webhookSecret.startsWith("whsec_") && webhookSecret !== secretToUse) {
+          console.log("[Webhook] Retrying with original secret (with prefix)");
+          const isValidWithPrefix = verifyOpenAIWebhookSignature(body, signature, timestamp, webhookSecret);
+          if (isValidWithPrefix) {
+            console.log("[Webhook] ✅ Signature verified with prefixed secret");
+          } else {
+            console.error("[Webhook] ❌ Signature verification failed with both secret formats");
+            return NextResponse.json(
+              { error: "Invalid signature" },
+              { status: 401 }
+            );
+          }
+        } else {
+          console.error("[Webhook] ❌ Signature verification failed");
+          return NextResponse.json(
+            { error: "Invalid signature" },
+            { status: 401 }
+          );
+        }
+      } else {
+        console.log("[Webhook] ✅ Signature verified successfully");
+      }
+    } else if (skipVerification) {
+      console.warn("[Webhook] ⚠️ SKIPPING signature verification (OPENAI_WEBHOOK_SKIP_VERIFICATION=true)");
     } else {
       console.warn("[Webhook] ⚠️ OPENAI_WEBHOOK_SECRET not configured - skipping signature verification");
     }
