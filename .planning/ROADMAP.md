@@ -46,13 +46,14 @@ Core platform: auth (Supabase), Stripe billing with credit packages, OpenAI Sora
   5. A Kling completion event with a timestamp older than 5 minutes is rejected
   6. When Kling API returns an error (rate limit, content policy, unavailable), the user sees a human-readable message in Spanish or English
   7. Webhook handler logs video ID, event type, and error message on any server-side failure
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 01-01: Research Kling AI API (video generation endpoint, webhook format, signature scheme) and update environment config
-- [ ] 01-02: Replace video generation call (Sora → Kling) and update webhook handler with Kling signature verification
-- [ ] 01-03: Implement webhook idempotency and replay protection; add structured error logging
-- [ ] 01-04: Test end-to-end flow and verify Supabase video status updates work with Kling completion events
+- [ ] 01-01-PLAN.md — Kling developer portal discovery + .env.dev env var setup (Wave 1, blocking)
+- [ ] 01-02-PLAN.md — lib/kling-auth.ts JWT generation + lib/products.ts Kling model names (Wave 2)
+- [ ] 01-03-PLAN.md — Rewrite app/api/generate/route.ts for Kling API (Wave 3)
+- [ ] 01-04-PLAN.md — Rewrite webhook handler + add downloadAndStoreVideoFromKling() (Wave 3, parallel with 01-03)
+- [ ] 01-05-PLAN.md — Add errors.kling.* i18n keys to es.json + en.json (Wave 3, parallel with 01-03 and 01-04)
 
 #### Phase 2: Credit System Hardening
 **Goal**: Credits cannot be double-allocated or lost — every deduction, Stripe allocation, and refund is atomic and idempotent across all paths
@@ -94,6 +95,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Provider Migration | v1.1 | 0/4 | Not started | - |
+| 1. Provider Migration | v1.1 | 0/5 | Not started | - |
 | 2. Credit System Hardening | v1.1 | 0/2 | Not started | - |
 | 3. Security, Storage & Launch | v1.1 | 0/3 | Not started | - |
