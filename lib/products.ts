@@ -37,11 +37,11 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   },
 ];
 
-// Credit costs per model (based on 12-second videos, covers 4s, 8s, and 12s)
+// Credit costs per model (per D-01: same costs as Sora — repricing deferred to post-Phase 1)
 export const CREDIT_COSTS = {
-  "sora-2": 1, // 1 credit = $2.40 per video (covers 4s, 8s, or 12s)
-  "sora-2-pro": 3, // 3 credits = $7.20 per video (covers 4s, 8s, or 12s)
-  "sora-2-pro-HD": 3, // Same as pro for now
+  "kling-v1": 1,   // Standard tier — was "sora-2"
+  "kling-v1-5": 3, // Pro tier — was "sora-2-pro"
+  "kling-v2": 3,   // Pro HD tier — was "sora-2-pro-HD"
 } as const;
 
 export function getCreditCost(model: string): number {
