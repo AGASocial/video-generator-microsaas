@@ -110,7 +110,27 @@ export async function downloadAndStoreVideoFromOpenAI(
 ): Promise<DownloadAndStoreResult> {
   // Construct OpenAI content URL
   const openaiContentUrl = `https://api.openai.com/v1/videos/${soraVideoId}/content`;
-  
+
   return downloadAndStoreVideo(videoId, openaiContentUrl, userId);
+}
+
+/**
+ * Downloads video from Kling CDN and stores in Supabase Storage.
+ * IMPORTANT: Kling CDN URLs expire after 24 hours.
+ * Call this immediately on webhook receipt — never defer.
+ *
+ * @param videoId - The UUID of the video entry in the database
+ * @param klingVideoUrl - The Kling CDN URL from task_result.videos[0].url
+ * @param userId - The UUID of the user who owns the video
+ */
+export async function downloadAndStoreVideoFromKling(
+  videoId: string,
+  klingVideoUrl: string,
+  userId: string
+): Promise<DownloadAndStoreResult> {
+  // Kling CDN URLs (cdn.klingai.com) are publicly accessible — no auth header needed
+  // The generic downloadAndStoreVideo handles download + Supabase upload + DB update
+  console.log(`[Video Storage] Downloading Kling video ${videoId} from CDN (expires in 24h)`);
+  return downloadAndStoreVideo(videoId, klingVideoUrl, userId);
 }
 
