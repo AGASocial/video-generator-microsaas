@@ -17,7 +17,7 @@ v1.0 MVP is shipped. The platform is code-complete but not production-stable. Th
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Provider Migration** - Replace OpenAI Sora with Kling AI; rebuild webhook handler with proper signature verification, idempotency, and replay protection
+- [x] **Phase 1: Provider Migration** - Replace OpenAI Sora with Kling AI; rebuild webhook handler with proper signature verification, idempotency, and replay protection (VERIFIED 2026-04-22)
 - [ ] **Phase 2: Credit System Hardening** - Make credit deduction, allocation, and refund operations atomic and idempotent across all payment and generation paths
 - [ ] **Phase 3: Security, Storage & Launch** - Verify RLS policies, production env vars, video proxy stability, video download, password reset, and error surfaces
 
@@ -49,11 +49,11 @@ Core platform: auth (Supabase), Stripe billing with credit packages, OpenAI Sora
 **Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 01-01-PLAN.md — Kling developer portal discovery + .env.dev env var setup (Wave 1, blocking)
-- [ ] 01-02-PLAN.md — lib/kling-auth.ts JWT generation + lib/products.ts Kling model names (Wave 2)
-- [ ] 01-03-PLAN.md — Rewrite app/api/generate/route.ts for Kling API (Wave 3)
-- [ ] 01-04-PLAN.md — Rewrite webhook handler + add downloadAndStoreVideoFromKling() (Wave 3, parallel with 01-03)
-- [ ] 01-05-PLAN.md — Add errors.kling.* i18n keys to es.json + en.json (Wave 3, parallel with 01-03 and 01-04)
+- [x] 01-01-PLAN.md — Kling developer portal discovery + .env.dev env var setup (Wave 1, blocking)
+- [x] 01-02-PLAN.md — lib/kling-auth.ts JWT generation + lib/products.ts Kling model names (Wave 2)
+- [x] 01-03-PLAN.md — Rewrite app/api/generate/route.ts for Kling API (Wave 3)
+- [x] 01-04-PLAN.md — Rewrite webhook handler + add downloadAndStoreVideoFromKling() (Wave 3, parallel with 01-03)
+- [x] 01-05-PLAN.md — Add errors.kling.* i18n keys to es.json + en.json (Wave 3, parallel with 01-03 and 01-04)
 
 #### Phase 2: Credit System Hardening
 **Goal**: Credits cannot be double-allocated or lost — every deduction, Stripe allocation, and refund is atomic and idempotent across all paths

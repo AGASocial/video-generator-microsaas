@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A pay-as-you-go SaaS platform for AI video generation using OpenAI's Sora models (sora-2, sora-2-pro, sora-2-pro-HD). Users purchase credit packages via Stripe, then generate videos from text prompts and optional reference images. Built for Spanish and English markets, with Spanish as the primary locale.
+A pay-as-you-go SaaS platform for AI video generation using Kling AI models (kling-v1, kling-v1-5, kling-v2). Users purchase credit packages via Stripe, then generate videos from text prompts and optional reference images. Built for Spanish and English markets, with Spanish as the primary locale.
 
 ## Core Value
 
