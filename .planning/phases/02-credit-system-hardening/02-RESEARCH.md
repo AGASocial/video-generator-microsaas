@@ -507,21 +507,24 @@ Given the project's `"mode": "yolo"` and no existing test infrastructure, and th
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `video_history` need a `credit_cost` column?**
    - What we know: The webhook handler needs the credit amount to refund. Currently derivable from `model` via `getCreditCost()`.
    - What's unclear: Whether pricing may diverge from model names in the future (making derivation unreliable).
    - Recommendation: Add `credit_cost integer` to `video_history` in migration 010. Populate it inside the RPC. Eliminates any pricing-change risk.
+   - RESOLVED: Yes — `credit_cost integer` column added to `video_history` in Plan 02-01 Task 1 migration.
 
 2. **Should Kling webhook also use `processed_webhook_events` dedup?**
    - What we know: The Kling webhook has a status-based idempotency guard (line 176) but it has a race window. `processed_webhook_events` already supports `provider: "kling"`.
    - What's unclear: How often Kling delivers duplicate webhooks in practice.
    - Recommendation: Yes — add Kling dedup to `processed_webhook_events`. The table is already being created; adding one more INSERT per webhook is negligible overhead and closes the race window.
+   - RESOLVED: Yes — Kling webhook dedup guard added in Plan 02-01 Task 4.
 
 3. **Should the `transactions` table idempotency check in the Stripe handler be kept or removed after D-01?**
    - What we know: Lines 147-165 of stripe/route.ts check `transactions.stripe_session_id`. D-01 adds a cleaner, provider-agnostic check.
    - Recommendation: Keep both as defense-in-depth. The `transactions` check is a natural guard even without `processed_webhook_events`. Remove only if it causes confusion.
+   - RESOLVED: Keep both — Plan 02-01 Task 3 preserves the transactions check as defense-in-depth alongside the new processed_webhook_events guard.
 
 ---
 
