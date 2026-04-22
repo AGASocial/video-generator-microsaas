@@ -64,11 +64,11 @@ Plans:
   2. Replaying a Stripe payment event that was already processed returns 200 with no side effects
   3. A video generation failure always triggers a credit refund — no case where generation fails and credits remain deducted
   4. Credit deduction and the generation record are written atomically — no partial state where credits are deducted but no generation record exists
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01: Implement `processed_webhook_events` table with unique constraint; guard Stripe and Kling handlers
-- [ ] 02-02: Implement atomic credit deduction via Supabase RPC; validate refund path end-to-end
+- [ ] 02-01-PLAN.md — processed_webhook_events table + video_history credit_cost column; dedup guards on Stripe and Kling handlers (Wave 1)
+- [ ] 02-02-PLAN.md — deduct_credits_and_create_video RPC + refund_video_credits RPC; rewrite generate route; add refund to Kling webhook failed branch (Wave 2)
 
 #### Phase 3: Security, Storage & Launch
 **Goal**: Production is safe and feature-complete — RLS policies block cross-user access, env vars are configured, the video proxy works, users can download videos, password reset sends Spanish emails, and all error states surface readable messages
@@ -95,6 +95,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Provider Migration | v1.1 | 0/5 | Not started | - |
+| 1. Provider Migration | v1.1 | 5/5 | Complete | 2026-04-22 |
 | 2. Credit System Hardening | v1.1 | 0/2 | Not started | - |
 | 3. Security, Storage & Launch | v1.1 | 0/3 | Not started | - |
