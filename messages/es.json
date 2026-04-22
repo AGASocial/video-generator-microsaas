@@ -247,5 +247,14 @@
   },
   "videoList": {
     "noVideosYet": "Aún no hay videos"
+  },
+  "errors": {
+    "kling": {
+      "rateLimit": "Has alcanzado el límite de solicitudes. Por favor, intenta nuevamente en unos minutos.",
+      "contentPolicy": "Tu solicitud fue rechazada por la política de contenido. Por favor, modifica el prompt e intenta nuevamente.",
+      "modelUnavailable": "El modelo de generación de video no está disponible temporalmente. Por favor, intenta nuevamente en unos minutos.",
+      "generationFailed": "La generación de video falló. Por favor, intenta nuevamente.",
+      "unknownError": "Ocurrió un error al generar el video. Por favor, intenta nuevamente."
+    }
   }
 }
