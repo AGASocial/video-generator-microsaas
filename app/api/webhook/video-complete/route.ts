@@ -255,6 +255,31 @@ export async function POST(request: NextRequest) {
         .update({ status: "failed" })
         .eq("id", videoId);
 
+      // D-03: Refund credits when Kling confirms failure (webhook-only, never on API errors)
+      // Uses increment RPC (credits + N) not absolute set — safe for concurrent writes
+      if (videoEntry.credit_cost && videoEntry.credit_cost > 0) {
+        const { error: refundError } = await supabase.rpc("refund_video_credits", {
+          p_user_id: videoEntry.user_id,
+          p_amount: videoEntry.credit_cost,
+        });
+        if (refundError) {
+          console.error("[KlingWebhook] Credit refund failed — credits not restored:", {
+            videoId,
+            userId: videoEntry.user_id,
+            creditCost: videoEntry.credit_cost,
+            error: refundError.message,
+          });
+        } else {
+          console.log("[KlingWebhook] Credit refund issued:", {
+            videoId,
+            userId: videoEntry.user_id,
+            creditCost: videoEntry.credit_cost,
+          });
+        }
+      } else {
+        console.warn("[KlingWebhook] No credit_cost on video entry — skipping refund:", { videoId });
+      }
+
       // ERR-03: Log failure with context
       console.error("[KlingWebhook] Video generation failed:", {
         videoId,
@@ -263,7 +288,7 @@ export async function POST(request: NextRequest) {
         statusMsg: bodyJson.data?.task_status_msg,
       });
 
-      // D-01: Record as processed AFTER all side effects complete (insert last)
+      // D-01: Record as processed AFTER all side effects complete (refund must be above this line)
       await supabase.from("processed_webhook_events").insert({
         event_type: taskStatus,
         event_id: taskId,
