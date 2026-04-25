@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     let finalPrompt = userPrompt;
     try {
       const { data: promptSetting, error: promptError } = await supabase
-        .from("prompt_settings")
+        .from("video_prompt_settings")
         .select("prefix_prompt")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -115,46 +115,52 @@ export async function POST(request: NextRequest) {
       console.log("[Kling] No image file received");
     }
 
-    // Deduct credits based on model
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ credits: user.credits - creditCost })
-      .eq("id", authUser.id);
+    // D-02: Atomic credit deduction + video_history creation via Supabase RPC
+    // Single transaction — if either operation fails, both roll back (no partial state)
+    const { data: videoEntryJson, error: rpcError } = await supabase.rpc(
+      "deduct_credits_and_create_video",
+      {
+        p_user_id: authUser.id,
+        p_credit_cost: creditCost,
+        p_prompt: userPrompt,
+        p_duration: duration,
+        p_model: model,
+        p_image_url: imageFile ? imageFile.name : null,
+      }
+    );
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to deduct credits" },
-        { status: 500 }
-      );
+    if (rpcError) {
+      console.error("[AtomicDeduction] RPC failed:", { error: rpcError.message, userId: authUser.id });
+      if (rpcError.message.includes("insufficient_credits")) {
+        return NextResponse.json(
+          { error: "Insufficient credits", required: creditCost, available: user.credits },
+          { status: 402 }
+        );
+      }
+      if (rpcError.message.includes("user_not_found")) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Failed to start generation" }, { status: 500 });
     }
 
-    // Create video history entry first (before API call)
-    // Store the original user prompt (not the final prompt with prefix)
-    const { data: videoEntry, error: videoError } = await supabase
-      .from("video_history")
-      .insert({
-        user_id: authUser.id,
-        prompt: userPrompt, // Store original user prompt, not the final one with prefix
-        image_url: imageFile ? imageFile.name : null,
-        duration,
-        model,
-        status: "processing",
-      })
-      .select()
-      .single();
+    // RPC returns json — parse into typed object for downstream use
+    const videoEntry = videoEntryJson as {
+      id: string;
+      user_id: string;
+      prompt: string;
+      image_url: string | null;
+      duration: number;
+      model: string;
+      status: string;
+      credit_cost: number;
+      created_at: string;
+    };
 
-    if (videoError) {
-      console.error("[Kling] Video history error:", videoError);
-      // Refund credit if we failed to create entry
-      await supabase
-        .from("users")
-        .update({ credits: user.credits })
-        .eq("id", authUser.id);
-      return NextResponse.json(
-        { error: "Failed to create video entry" },
-        { status: 500 }
-      );
-    }
+    console.log("[AtomicDeduction] Credits deducted and video entry created:", {
+      videoId: videoEntry.id,
+      userId: authUser.id,
+      creditCost,
+    });
 
     // Kling API endpoint (per KLING-API-NOTES.md Q4 / RESEARCH.md Pattern 2)
     const klingApiUrl = process.env.KLING_API_URL || "https://api.klingai.com";
@@ -165,11 +171,6 @@ export async function POST(request: NextRequest) {
         klingToken = generateKlingToken();
       } catch (tokenError) {
         console.error("[Kling] Failed to generate auth token:", tokenError);
-        // Refund credits
-        await supabase
-          .from("users")
-          .update({ credits: user.credits })
-          .eq("id", authUser.id);
         await supabase
           .from("video_history")
           .update({ status: "failed" })
@@ -286,17 +287,11 @@ export async function POST(request: NextRequest) {
         ? klingError.message
         : "errors.kling.unknownError";
 
-      // Update status to failed and refund credits
+      // Update status to failed (D-03: no credit refund on API errors — refund is webhook-only)
       await supabase
         .from("video_history")
         .update({ status: "failed" })
         .eq("id", videoEntry.id);
-
-      // Refund the credits
-      await supabase
-        .from("users")
-        .update({ credits: user.credits })
-        .eq("id", authUser.id);
 
       return NextResponse.json(
         { error: errorMessage },
