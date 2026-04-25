@@ -224,6 +224,17 @@
       "email": "Correo electrónico",
       "password": "Contraseña",
       "confirmPassword": "Confirmar contraseña"
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "description": "Ingresa una nueva contraseña para tu cuenta",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "submit": "Actualizar contraseña",
+      "updating": "Actualizando...",
+      "success": "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
+      "error": "No se pudo actualizar la contraseña. El enlace puede haber expirado.",
+      "passwordMismatch": "Las contraseñas no coinciden"
     }
   },
   "profile": {

@@ -224,6 +224,17 @@
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password"
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Enter a new password for your account",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Update password",
+      "updating": "Updating...",
+      "success": "Password updated successfully. You can now sign in.",
+      "error": "Failed to update password. The reset link may have expired.",
+      "passwordMismatch": "Passwords do not match"
     }
   },
   "profile": {
