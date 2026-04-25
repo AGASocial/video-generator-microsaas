@@ -180,9 +180,9 @@ export async function POST(request: NextRequest) {
 
     const videoId = videoEntry.id;
 
-    // D-01: processed_webhook_events dedup for Kling (closes race window on duplicate delivery)
+    // D-01: video_processed_webhook_events dedup for Kling (closes race window on duplicate delivery)
     const { data: existingKlingEvent, error: existingKlingError } = await supabase
-      .from("processed_webhook_events")
+      .from("video_processed_webhook_events")
       .select("id")
       .eq("provider", "kling")
       .eq("event_id", taskId)
@@ -289,7 +289,7 @@ export async function POST(request: NextRequest) {
       });
 
       // D-01: Record as processed AFTER all side effects complete (refund must be above this line)
-      await supabase.from("processed_webhook_events").insert({
+      await supabase.from("video_processed_webhook_events").insert({
         event_type: taskStatus,
         event_id: taskId,
         provider: "kling",
@@ -304,7 +304,7 @@ export async function POST(request: NextRequest) {
 
     // D-01: Record succeed event as processed (insert last)
     if (taskStatus === "succeed") {
-      await supabase.from("processed_webhook_events").insert({
+      await supabase.from("video_processed_webhook_events").insert({
         event_type: taskStatus,
         event_id: taskId,
         provider: "kling",

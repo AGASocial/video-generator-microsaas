@@ -1,4 +1,4 @@
--- Migration 010: Add processed_webhook_events table for webhook idempotency (D-01)
+-- Migration 010: Add video_processed_webhook_events table for webhook idempotency (D-01)
 -- and add credit_cost column to video_history for refund amounts (D-02/D-03)
 
 -- Add credit_cost to video_history so refund handler knows exact amount (D-03)
@@ -7,7 +7,7 @@ ALTER TABLE public.video_history
 
 -- Idempotency audit table for all webhook providers (D-01)
 -- UNIQUE(provider, event_id, event_type) prevents double-processing of any webhook event
-CREATE TABLE IF NOT EXISTS public.processed_webhook_events (
+CREATE TABLE IF NOT EXISTS public.video_processed_webhook_events (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type   text NOT NULL,
   event_id     text NOT NULL,
@@ -19,4 +19,4 @@ CREATE TABLE IF NOT EXISTS public.processed_webhook_events (
 );
 
 -- RLS: service role bypasses; no user-facing access needed for this audit table
-ALTER TABLE public.processed_webhook_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.video_processed_webhook_events ENABLE ROW LEVEL SECURITY;

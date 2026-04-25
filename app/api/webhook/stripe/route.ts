@@ -144,9 +144,9 @@ export async function POST(request: NextRequest) {
         },
       }
     );
-    // D-01: Check processed_webhook_events for provider-agnostic idempotency
+    // D-01: Check video_processed_webhook_events for provider-agnostic idempotency
     const { data: existingEvent, error: existingEventError } = await supabase
-      .from("processed_webhook_events")
+      .from("video_processed_webhook_events")
       .select("id")
       .eq("provider", "stripe")
       .eq("event_id", event.id)
@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
     }
 
     // D-01: Record event as processed AFTER all side effects complete (insert last — prevents permanent dedup on failure)
-    await supabase.from("processed_webhook_events").insert({
+    await supabase.from("video_processed_webhook_events").insert({
       event_type: event.type,
       event_id: event.id,
       provider: "stripe",
