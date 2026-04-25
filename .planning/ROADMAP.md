@@ -81,12 +81,12 @@ Plans:
   4. User can click a download button on a completed video card and receive the video file on their device
   5. A user who resets their password receives an email with Spanish-language content and can successfully set a new password
   6. When Stripe Checkout fails, the user sees a helpful error message without internal details exposed
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01: Verify and fix Supabase RLS policies on all tables; confirm service role key scope
-- [ ] 03-02: Configure production env vars; confirm video proxy works in production with correct content-type headers
-- [ ] 03-03: Add video download button to video card; verify Spanish password reset email template
+- [ ] 03-01-PLAN.md — Fix video proxy (redirect to Supabase Storage URL) + add NEXT_PUBLIC_APP_URL to .env.dev (Wave 1)
+- [ ] 03-02-PLAN.md — Create password reset page + i18n keys in en.json and es.json (Wave 1, parallel with 03-01)
+- [ ] 03-03-PLAN.md — Write PRE-DEPLOY-RUNBOOK.md covering env vars, RLS SQL checks, external service setup, and smoke tests (Wave 2)
 
 ## Progress
 
