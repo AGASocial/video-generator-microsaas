@@ -144,8 +144,33 @@ export async function POST(request: NextRequest) {
         },
       }
     );
+    // D-01: Check processed_webhook_events for provider-agnostic idempotency
+    const { data: existingEvent, error: existingEventError } = await supabase
+      .from("processed_webhook_events")
+      .select("id")
+      .eq("provider", "stripe")
+      .eq("event_id", event.id)
+      .eq("event_type", event.type)
+      .single();
+
+    if (existingEventError && existingEventError.code !== "PGRST116") {
+      console.error("[ProcessedEvents] Error checking processed events:", existingEventError);
+    }
+
+    if (existingEvent) {
+      console.log("[ProcessedEvents] Already processed:", {
+        provider: "stripe",
+        eventId: event.id,
+        eventType: event.type,
+      });
+      return NextResponse.json(
+        { received: true, message: "Already processed" },
+        { status: 200 }
+      );
+    }
+
     const { data: existingTransaction, error: checkError } = await supabase
-      .from("transactions")
+      .from("video_transactions")
       .select("id")
       .eq("stripe_session_id", session.id)
       .single();
@@ -362,7 +387,7 @@ export async function POST(request: NextRequest) {
     // Record transaction
     console.log("[WEBHOOK] Recording transaction...");
     const { data: transaction, error: transactionError } = await supabase
-      .from("transactions")
+      .from("video_transactions")
       .insert({
         user_id: userId,
         amount: packageInfo.priceInCents,
@@ -385,7 +410,20 @@ export async function POST(request: NextRequest) {
         sessionId: session.id,
       });
     }
-    
+
+    // D-01: Record event as processed AFTER all side effects complete (insert last — prevents permanent dedup on failure)
+    await supabase.from("processed_webhook_events").insert({
+      event_type: event.type,
+      event_id: event.id,
+      provider: "stripe",
+      user_id: userId,
+    });
+    console.log("[ProcessedEvents] Recorded event:", {
+      provider: "stripe",
+      eventId: event.id,
+      eventType: event.type,
+    });
+
     console.log("[WEBHOOK] ========== WEBHOOK PROCESSING COMPLETE ==========");
   } else {
     console.log("[WEBHOOK] ⚠️ Event type not handled:", event.type);
