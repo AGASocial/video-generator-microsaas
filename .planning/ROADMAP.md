@@ -18,7 +18,7 @@ v1.0 MVP is shipped. The platform is code-complete but not production-stable. Th
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Provider Migration** - Replace OpenAI Sora with Kling AI; rebuild webhook handler with proper signature verification, idempotency, and replay protection (VERIFIED 2026-04-22)
-- [ ] **Phase 2: Credit System Hardening** - Make credit deduction, allocation, and refund operations atomic and idempotent across all payment and generation paths
+- [x] **Phase 2: Credit System Hardening** - Make credit deduction, allocation, and refund operations atomic and idempotent across all payment and generation paths
 - [ ] **Phase 3: Security, Storage & Launch** - Verify RLS policies, production env vars, video proxy stability, video download, password reset, and error surfaces
 
 ## Phase Details
@@ -67,8 +67,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — processed_webhook_events table + video_history credit_cost column; dedup guards on Stripe and Kling handlers (Wave 1)
-- [ ] 02-02-PLAN.md — deduct_credits_and_create_video RPC + refund_video_credits RPC; rewrite generate route; add refund to Kling webhook failed branch (Wave 2)
+- [x] 02-01-PLAN.md — processed_webhook_events table + video_history credit_cost column; dedup guards on Stripe and Kling handlers (Wave 1)
+- [x] 02-02-PLAN.md — deduct_credits_and_create_video RPC + refund_video_credits RPC; rewrite generate route; add refund to Kling webhook failed branch (Wave 2)
 
 #### Phase 3: Security, Storage & Launch
 **Goal**: Production is safe and feature-complete — RLS policies block cross-user access, env vars are configured, the video proxy works, users can download videos, password reset sends Spanish emails, and all error states surface readable messages
@@ -96,5 +96,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Provider Migration | v1.1 | 5/5 | Complete | 2026-04-22 |
-| 2. Credit System Hardening | v1.1 | 0/2 | Not started | - |
+| 2. Credit System Hardening | v1.1 | 2/2 | Complete | 2026-04-25 |
 | 3. Security, Storage & Launch | v1.1 | 0/3 | Not started | - |
