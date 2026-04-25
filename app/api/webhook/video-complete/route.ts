@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { downloadAndStoreVideoFromKling } from "@/lib/video-storage";
 import crypto from "crypto";
 
@@ -156,10 +156,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Lookup video_history by Kling task_id (stored in job_id column)
-    const supabase = await createClient();
+    // Fix: use service role client — no user session exists in webhook context (RESEARCH.md Finding 4)
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("[KlingWebhook] SUPABASE_SERVICE_ROLE_KEY not configured");
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
+    const supabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
     const { data: videoEntry, error: videoError } = await supabase
       .from("video_history")
-      .select("id, user_id, status, job_id")
+      .select("id, user_id, status, job_id, credit_cost")
       .eq("job_id", taskId)
       .single();
 
@@ -170,6 +179,24 @@ export async function POST(request: NextRequest) {
     }
 
     const videoId = videoEntry.id;
+
+    // D-01: processed_webhook_events dedup for Kling (closes race window on duplicate delivery)
+    const { data: existingKlingEvent, error: existingKlingError } = await supabase
+      .from("processed_webhook_events")
+      .select("id")
+      .eq("provider", "kling")
+      .eq("event_id", taskId)
+      .eq("event_type", taskStatus)
+      .single();
+
+    if (existingKlingError && existingKlingError.code !== "PGRST116") {
+      console.error("[ProcessedEvents] Error checking Kling processed events:", existingKlingError);
+    }
+
+    if (existingKlingEvent) {
+      console.log("[ProcessedEvents] Already processed Kling event:", { taskId, taskStatus });
+      return NextResponse.json({ received: true });
+    }
 
     // STAT-04: Idempotency check — skip if already in a terminal state
     // Mirrors the Stripe pattern: select-before-update
@@ -234,6 +261,29 @@ export async function POST(request: NextRequest) {
         taskId,
         taskStatus,
         statusMsg: bodyJson.data?.task_status_msg,
+      });
+
+      // D-01: Record as processed AFTER all side effects complete (insert last)
+      await supabase.from("processed_webhook_events").insert({
+        event_type: taskStatus,
+        event_id: taskId,
+        provider: "kling",
+        user_id: videoEntry.user_id,
+      });
+      console.log("[ProcessedEvents] Recorded Kling event:", {
+        provider: "kling",
+        eventId: taskId,
+        eventType: taskStatus,
+      });
+    }
+
+    // D-01: Record succeed event as processed (insert last)
+    if (taskStatus === "succeed") {
+      await supabase.from("processed_webhook_events").insert({
+        event_type: taskStatus,
+        event_id: taskId,
+        provider: "kling",
+        user_id: videoEntry.user_id,
       });
     }
 
