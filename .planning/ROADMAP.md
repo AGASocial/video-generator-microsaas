@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Provider Migration** - Replace OpenAI Sora with Kling AI; rebuild webhook handler with proper signature verification, idempotency, and replay protection (VERIFIED 2026-04-22)
 - [x] **Phase 2: Credit System Hardening** - Make credit deduction, allocation, and refund operations atomic and idempotent across all payment and generation paths
-- [ ] **Phase 3: Security, Storage & Launch** - Verify RLS policies, production env vars, video proxy stability, video download, password reset, and error surfaces
+- [x] **Phase 3: Security, Storage & Launch** - Verify RLS policies, production env vars, video proxy stability, video download, password reset, and error surfaces (VERIFIED 2026-04-27, 8/8 automated checks; 4 human UAT items pending live deploy)
 
 ## Phase Details
 
@@ -84,9 +84,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Fix video proxy (redirect to Supabase Storage URL) + add NEXT_PUBLIC_APP_URL to .env.dev (Wave 1)
-- [ ] 03-02-PLAN.md — Create password reset page + i18n keys in en.json and es.json (Wave 1, parallel with 03-01)
-- [ ] 03-03-PLAN.md — Write PRE-DEPLOY-RUNBOOK.md covering env vars, RLS SQL checks, external service setup, and smoke tests (Wave 2)
+- [x] 03-01-PLAN.md — Fix video proxy (redirect to Supabase Storage URL) + add NEXT_PUBLIC_APP_URL to .env.dev (Wave 1)
+- [x] 03-02-PLAN.md — Create password reset page + i18n keys in en.json and es.json (Wave 1, parallel with 03-01)
+- [x] 03-03-PLAN.md — Write PRE-DEPLOY-RUNBOOK.md covering env vars, RLS SQL checks, external service setup, and smoke tests (Wave 2)
 
 ## Progress
 
@@ -97,4 +97,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|-----------|----------------|--------|-----------|
 | 1. Provider Migration | v1.1 | 5/5 | Complete | 2026-04-22 |
 | 2. Credit System Hardening | v1.1 | 2/2 | Complete | 2026-04-25 |
-| 3. Security, Storage & Launch | v1.1 | 0/3 | Not started | - |
+| 3. Security, Storage & Launch | v1.1 | 3/3 | Verified — human UAT pending | 2026-04-27 |

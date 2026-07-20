@@ -123,18 +123,18 @@ Deferred to post-launch. Add once v1 is stable in production.
 |-------------|-------|--------|
 | AUTH-01 | Phase 0 | Complete |
 | AUTH-02 | Phase 0 | Complete |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-03 | Phase 3 | Pending |
 | AUTH-04 | Phase 0 | Complete |
 | AUTH-05 | Phase 0 | Complete |
 | CRED-01 | Phase 0 | Complete |
 | CRED-02 | Phase 0 | Complete |
 | CRED-03 | Phase 0 | Complete |
-| CRED-04 | Phase 1 | Pending |
-| CRED-05 | Phase 1 | Pending |
+| CRED-04 | Phase 2 | Pending |
+| CRED-05 | Phase 2 | Pending |
 | CRED-06 | Phase 0 | Complete |
 | PAY-01 | Phase 0 | Complete |
 | PAY-02 | Phase 0 | Complete |
-| PAY-03 | Phase 1 | Pending |
+| PAY-03 | Phase 2 | Pending |
 | PAY-04 | Phase 0 | Complete |
 | GEN-01 | Phase 0 | Complete |
 | GEN-02 | Phase 0 | Complete |
@@ -150,19 +150,19 @@ Deferred to post-launch. Add once v1 is stable in production.
 | STAT-06 | Phase 0 | Complete |
 | VID-01 | Phase 0 | Complete |
 | VID-02 | Phase 0 | Complete |
-| VID-03 | Phase 1 | Pending |
-| VID-04 | Phase 1 | Pending |
+| VID-03 | Phase 3 | Pending |
+| VID-04 | Phase 3 | Pending |
 | VID-05 | Phase 0 | Complete |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
+| INFRA-01 | Phase 3 | Pending |
+| INFRA-02 | Phase 3 | Pending |
 | INFRA-03 | Phase 0 | Complete |
 | INFRA-04 | Phase 0 | Complete |
 | INFRA-05 | Phase 0 | Complete |
 | INFRA-06 | Phase 0 | Complete |
 | ERR-01 | Phase 1 | Pending |
-| ERR-02 | Phase 1 | Pending |
+| ERR-02 | Phase 3 | Pending |
 | ERR-03 | Phase 1 | Pending |
-| ERR-04 | Phase 1 | Pending |
+| ERR-04 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 43 total

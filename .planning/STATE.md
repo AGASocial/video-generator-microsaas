@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-21)
 
 **Core value:** Users can generate a video and receive it in their history without the platform getting in the way — credits deduct correctly, generation completes reliably, and the video is stored and playable.
-**Current focus:** Phase 3 — Security, Storage & Launch
+**Current focus:** Phase 3 — Security, Storage & Launch (human UAT pending before milestone close)
 
 ## Current Position
 
 Phase: 3 of 3 (Security, Storage & Launch)
-Plan: 0 of 3 complete
-Status: Ready for planning
-Last activity: 2026-04-25 — Phase 2 executed and verified; credit system hardened
+Plan: 3 of 3 complete
+Status: Verified (8/8 automated checks) — 4 human UAT items pending live deploy
+Last activity: 2026-04-27 — Phase 3 executed and verified; human UAT items persisted for post-deploy testing
 
-Progress: [██████████] 67% (2/3 phases complete)
+Progress: [██████████] 100% (3/3 phases complete; milestone close blocked on human UAT)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 10
 - Average duration: ~2 hours per plan
-- Total execution time: ~14 hours (Phases 1-2)
+- Total execution time: ~20 hours (Phases 1-3)
 
 **By Phase:**
 
@@ -29,6 +29,7 @@ Progress: [██████████] 67% (2/3 phases complete)
 |-------|-------|-------|----------|
 | 1 (Provider Migration) | 5 | ~10h | ~2h |
 | 2 (Credit System Hardening) | 2 | ~4h | ~2h |
+| 3 (Security, Storage & Launch) | 3 | ~6h | ~2h |
 
 ## Accumulated Context
 
@@ -41,10 +42,11 @@ Progress: [██████████] 67% (2/3 phases complete)
 ### Pending Todos
 
 - Fix `.from("users")` → `.from("video_users")` across codebase (pre-existing, spawned task)
+- Run 4 pending human UAT items after deploying to Vercel (see 03-HUMAN-UAT.md): Spanish password-reset email, video download to device, video proxy 302 redirect in production, Stripe checkout failure toast
 
 ### Blockers/Concerns
 
-- None active. Phase 2 complete; Phase 3 (security, storage, launch) ready to begin.
+- Milestone v1.1 cannot close until the 4 human UAT items above are run against a live deployment.
 
 ## Deferred Items
 
@@ -56,6 +58,6 @@ Progress: [██████████] 67% (2/3 phases complete)
 
 ## Session Continuity
 
-Last session: 2026-04-25
-Stopped at: Phase 2 complete — credit system hardened; ready for Phase 3 planning
-Resume file: None
+Last session: 2026-04-27
+Stopped at: Phase 3 complete and verified (8/8 automated); blocked on 4 human UAT items requiring a live Vercel deploy
+Resume file: .planning/phases/03-security-storage-launch/03-HUMAN-UAT.md
