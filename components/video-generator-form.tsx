@@ -41,8 +41,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
   const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true);
-  const [duration, setDuration] = useState("8"); // 4, 8, 12 seconds
-  const [model, setModel] = useState("sora-2-pro");
+  const [duration, setDuration] = useState("5"); // 5, 10 seconds (Kling API)
+  const [model, setModel] = useState("kling-v1-5");
   const [dimensions, setDimensions] = useState("1280x720");
   const [soundEffect, setSoundEffect] = useState("no");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -533,9 +533,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">4 {t('second')}</SelectItem>
-                    <SelectItem value="8">8 {t('seconds')}</SelectItem>
-                    <SelectItem value="12" defaultValue="12">12 {t('seconds')}</SelectItem>
+                    <SelectItem value="5">5 {t('seconds')}</SelectItem>
+                    <SelectItem value="10">10 {t('seconds')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -550,9 +549,9 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sora-2">Sora 2 ({getCreditCost("sora-2")} credit)</SelectItem>
-                    <SelectItem value="sora-2-pro">Sora 2 Pro ({getCreditCost("sora-2-pro")} credits)</SelectItem>
-                    {/* <SelectItem value="sora-2-pro-HD">Sora 2 Pro HD ({getCreditCost("sora-2-pro-HD")} credits)</SelectItem> */}
+                    <SelectItem value="kling-v1">Kling v1 ({getCreditCost("kling-v1")} credit)</SelectItem>
+                    <SelectItem value="kling-v1-5">Kling v1.5 ({getCreditCost("kling-v1-5")} credits)</SelectItem>
+                    <SelectItem value="kling-v2">Kling v2 ({getCreditCost("kling-v2")} credits)</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
