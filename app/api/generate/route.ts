@@ -5,7 +5,8 @@ import { getCreditCost } from "@/lib/products";
 import { generateKlingToken } from "@/lib/kling-auth";
 
 // Allowed model names for Kling AI (T-03-01: model validation)
-const ALLOWED_MODELS = ["kling-v1", "kling-v1-5", "kling-v2"] as const;
+// Must match Kling's model_name enum exactly — see lib/products.ts for source.
+const ALLOWED_MODELS = ["kling-v1", "kling-v1-5", "kling-v1-6", "kling-v2-master"] as const;
 type AllowedModel = typeof ALLOWED_MODELS[number];
 
 // Refunds credits for a video that failed before Kling ever returned a task_id.
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     // T-03-01: Validate model is an allowed Kling model name
     if (!ALLOWED_MODELS.includes(model as AllowedModel)) {
       return NextResponse.json(
-        { error: "Invalid model. Allowed models: kling-v1, kling-v1-5, kling-v2" },
+        { error: "Invalid model. Allowed models: kling-v1, kling-v1-5, kling-v1-6, kling-v2-master" },
         { status: 400 }
       );
     }

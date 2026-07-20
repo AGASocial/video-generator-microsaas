@@ -38,10 +38,14 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
 ];
 
 // Credit costs per model (per D-01: same costs as Sora — repricing deferred to post-Phase 1)
+// Model names must match Kling's model_name enum exactly (confirmed via
+// https://kling.ai/document-api/api/video/1-6/image-to-video — "kling-v2" is
+// NOT a valid value, the real v2 identifier is "kling-v2-master").
 export const CREDIT_COSTS = {
-  "kling-v1": 1,   // Standard tier — was "sora-2"
-  "kling-v1-5": 3, // Pro tier — was "sora-2-pro"
-  "kling-v2": 3,   // Pro HD tier — was "sora-2-pro-HD"
+  "kling-v1": 1,        // Standard tier — was "sora-2"
+  "kling-v1-5": 3,      // Pro tier — was "sora-2-pro"
+  "kling-v1-6": 3,      // Same Kling per-second rate as v1-5; adds multi-image-to-video support
+  "kling-v2-master": 3, // Pro HD tier — was "sora-2-pro-HD" (fixed invalid "kling-v2" model name)
 } as const;
 
 export function getCreditCost(model: string): number {

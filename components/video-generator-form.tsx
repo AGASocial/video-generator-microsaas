@@ -568,7 +568,8 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                   <SelectContent>
                     <SelectItem value="kling-v1">Kling v1 ({getCreditCost("kling-v1")} credit)</SelectItem>
                     <SelectItem value="kling-v1-5">Kling v1.5 ({getCreditCost("kling-v1-5")} credits)</SelectItem>
-                    <SelectItem value="kling-v2">Kling v2 ({getCreditCost("kling-v2")} credits)</SelectItem>
+                    <SelectItem value="kling-v1-6">Kling v1.6 ({getCreditCost("kling-v1-6")} credits)</SelectItem>
+                    <SelectItem value="kling-v2-master">Kling v2 ({getCreditCost("kling-v2-master")} credits)</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
