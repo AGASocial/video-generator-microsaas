@@ -28,7 +28,7 @@
 ```sql
 -- Existing pattern: plain SQL, IF NOT EXISTS guards, gen_random_uuid() PK,
 -- timestamps with time zone DEFAULT now(), foreign keys with ON DELETE CASCADE
-create table if not exists public.users (
+create table if not exists public.video_users (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   credits integer not null default 0,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.processed_webhook_events (
   event_type   text NOT NULL,
   event_id     text NOT NULL,
   provider     text NOT NULL,
-  user_id      uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  user_id      uuid REFERENCES public.video_users(id) ON DELETE SET NULL,
   processed_at timestamp with time zone DEFAULT now(),
   created_at   timestamp with time zone DEFAULT now(),
   UNIQUE (provider, event_id, event_type)
@@ -69,7 +69,7 @@ DECLARE
   v_video_entry     json;
 BEGIN
   SELECT credits INTO v_current_credits
-  FROM public.users
+  FROM public.video_users
   WHERE id = p_user_id
   FOR UPDATE;
 
@@ -81,7 +81,7 @@ BEGIN
     RAISE EXCEPTION 'insufficient_credits';
   END IF;
 
-  UPDATE public.users
+  UPDATE public.video_users
   SET credits = credits - p_credit_cost
   WHERE id = p_user_id;
 
@@ -184,7 +184,7 @@ const supabase = createServiceClient(
 **Existing idempotency check pattern** (lines 147-166) — this is the model to adapt for `processed_webhook_events`:
 ```typescript
 const { data: existingTransaction, error: checkError } = await supabase
-  .from("transactions")
+  .from("video_transactions")
   .select("id")
   .eq("stripe_session_id", session.id)
   .single();

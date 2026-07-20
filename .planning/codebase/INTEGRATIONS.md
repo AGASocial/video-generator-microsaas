@@ -41,10 +41,10 @@
   - Client (browser): `lib/supabase/client.ts` — `createBrowserClient` from `@supabase/ssr`
   - Client (middleware): `lib/supabase/middleware.ts` — session refresh on every request
   - Tables:
-    - `public.users` — `id` (FK auth.users), `email`, `credits`, `theme_preference`, `created_at`
+    - `public.video_users` — `id` (FK auth.users), `email`, `credits`, `theme_preference`, `created_at`
     - `public.video_history` — `id`, `user_id`, `prompt`, `image_url`, `video_url`, `duration`, `model`, `status`, `job_id` (stores OpenAI Sora video ID), `created_at`
-    - `public.transactions` — `id`, `user_id`, `amount`, `credits_purchased`, `stripe_session_id`, `status`, `created_at`
-    - `public.prompt_settings` — `prefix_prompt`, `is_active`, `created_at` (admin-configurable prompt prefix)
+    - `public.video_transactions` — `id`, `user_id`, `amount`, `credits_purchased`, `stripe_session_id`, `status`, `created_at`
+    - `public.video_prompt_settings` — `prefix_prompt`, `is_active`, `created_at` (admin-configurable prompt prefix)
   - Row Level Security (RLS) enabled on all tables; users can only access their own rows
   - Migrations: `scripts/001_create_tables.sql` through `scripts/009_update_default_theme_to_christmas.sql`
 

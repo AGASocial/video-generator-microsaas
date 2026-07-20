@@ -282,7 +282,7 @@ export async function POST(request: NextRequest) {
     if (!userId && session.customer_email) {
       console.log("[WEBHOOK] Looking up user by email:", session.customer_email);
       const { data: userByEmail, error: emailError } = await supabase
-        .from("users")
+        .from("video_users")
         .select("id")
         .eq("email", session.customer_email)
         .single();
@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
         if (customer && !customer.deleted && customer.email) {
           console.log("[WEBHOOK] Customer email from Stripe:", customer.email);
           const { data: userByEmail, error: customerEmailError } = await supabase
-            .from("users")
+            .from("video_users")
             .select("id")
             .eq("email", customer.email)
             .single();
@@ -342,7 +342,7 @@ export async function POST(request: NextRequest) {
     // Add credits to user
     console.log("[WEBHOOK] Fetching current user credits...");
     const { data: user, error: userFetchError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("credits")
       .eq("id", userId)
       .single();
@@ -368,7 +368,7 @@ export async function POST(request: NextRequest) {
     console.log("[WEBHOOK] Updating credits:", `${user.credits} + ${packageInfo.credits} = ${newCredits}`);
     
     const { data: updatedUser, error: updateError } = await supabase
-      .from("users")
+      .from("video_users")
       .update({ credits: newCredits })
       .eq("id", userId)
       .select()

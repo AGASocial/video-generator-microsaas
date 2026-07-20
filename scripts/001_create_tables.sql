@@ -1,5 +1,5 @@
   -- Create users table with credits system
-  create table if not exists public.users (
+  create table if not exists public.video_users (
     id uuid primary key references auth.users(id) on delete cascade,
     email text not null,
     credits integer not null default 0,
@@ -7,25 +7,25 @@
   );
 
   -- Enable RLS on users table
-  alter table public.users enable row level security;
+  alter table public.video_users enable row level security;
 
   -- RLS policies for users table
   create policy "users_select_own"
-    on public.users for select
+    on public.video_users for select
     using (auth.uid() = id);
 
   create policy "users_insert_own"
-    on public.users for insert
+    on public.video_users for insert
     with check (auth.uid() = id);
 
   create policy "users_update_own"
-    on public.users for update
+    on public.video_users for update
     using (auth.uid() = id);
 
   -- Create video_history table
   create table if not exists public.video_history (
     id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references public.users(id) on delete cascade,
+    user_id uuid not null references public.video_users(id) on delete cascade,
     prompt text not null,
     image_url text,
     video_url text,
@@ -56,9 +56,9 @@
     using (auth.uid() = user_id);
 
   -- Create transactions table
-  create table if not exists public.transactions (
+  create table if not exists public.video_transactions (
     id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references public.users(id) on delete cascade,
+    user_id uuid not null references public.video_users(id) on delete cascade,
     amount integer not null,
     credits_purchased integer not null,
     stripe_session_id text,
@@ -67,13 +67,13 @@
   );
 
   -- Enable RLS on transactions table
-  alter table public.transactions enable row level security;
+  alter table public.video_transactions enable row level security;
 
   -- RLS policies for transactions table
   create policy "transactions_select_own"
-    on public.transactions for select
+    on public.video_transactions for select
     using (auth.uid() = user_id);
 
   create policy "transactions_insert_own"
-    on public.transactions for insert
+    on public.video_transactions for insert
     with check (auth.uid() = user_id);

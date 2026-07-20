@@ -1,5 +1,9 @@
 -- Migration 010: Add video_processed_webhook_events table for webhook idempotency (D-01)
 -- and add credit_cost column to video_history for refund amounts (D-02/D-03)
+--
+-- NOTE: the user_id FK below points at public.users, which belongs to a different
+-- project sharing this Supabase instance, not this app's public.video_users. See
+-- 013_fix_processed_webhook_events_user_fk.sql for the correction.
 
 -- Add credit_cost to video_history so refund handler knows exact amount (D-03)
 ALTER TABLE public.video_history

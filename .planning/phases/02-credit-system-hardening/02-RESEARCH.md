@@ -171,7 +171,7 @@ DECLARE
 BEGIN
   -- Lock the user row to prevent concurrent deductions
   SELECT credits INTO v_current_credits
-  FROM public.users
+  FROM public.video_users
   WHERE id = p_user_id
   FOR UPDATE;
 
@@ -184,7 +184,7 @@ BEGIN
   END IF;
 
   -- Deduct credits
-  UPDATE public.users
+  UPDATE public.video_users
   SET credits = credits - p_credit_cost
   WHERE id = p_user_id;
 
@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS public.processed_webhook_events (
   event_type   text NOT NULL,
   event_id     text NOT NULL,
   provider     text NOT NULL,
-  user_id      uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  user_id      uuid REFERENCES public.video_users(id) ON DELETE SET NULL,
   processed_at timestamp with time zone DEFAULT now(),
   created_at   timestamp with time zone DEFAULT now(),
   UNIQUE (provider, event_id, event_type)

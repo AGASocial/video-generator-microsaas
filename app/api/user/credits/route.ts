@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: userData, error: userError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("credits")
       .eq("id", user.id)
       .single();

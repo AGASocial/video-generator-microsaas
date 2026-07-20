@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     // Get user data from database
     let { data: userData, error: userError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("*")
       .eq("id", authUser.id)
       .single();

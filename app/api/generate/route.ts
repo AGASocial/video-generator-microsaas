@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Get user data to check credits
     const { data: user, error: userError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("*")
       .eq("id", authUser.id)
       .single();

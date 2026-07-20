@@ -199,7 +199,7 @@ POST /api/generate (formData: prompt, model, duration, image?)
 [1] Verify Supabase session → get user.credits
 [2] Calculate creditCost from lib/products.ts
 [3] Check credits >= cost (402 if not)
-[4] Fetch active prefix from prompt_settings table → build finalPrompt
+[4] Fetch active prefix from video_prompt_settings table → build finalPrompt
 [5] Deduct credits atomically (UPDATE users SET credits = credits - cost)
 [6] INSERT video_history { status: "processing" }
 [7] POST to OpenAI /v1/videos (JSON or multipart/form-data if image)
@@ -316,7 +316,7 @@ supabase.auth.getUser() → validated session
 | OpenAI Sora API | REST — `POST /v1/videos` (JSON or multipart), `GET /v1/videos/{id}` | No official SDK for Sora video; raw fetch only. API URL configurable via `OPENAI_API_URL` env var. |
 | OpenAI Webhooks | Inbound push to `/api/webhook/video-complete` | HMAC-SHA256 with `OpenAI-Signature` + `OpenAI-Timestamp` headers. 5-min replay window enforced. Node.js runtime required. |
 | Stripe | `POST /api/checkout/create-session` creates embedded session; inbound webhook at `/api/webhook/stripe` | Use `@stripe/stripe-js` + `stripe` npm packages. Stripe-Signature header verification. |
-| Supabase Auth | Cookie-based SSR sessions via `@supabase/ssr`. Middleware refreshes sessions on every request. | DB trigger `on auth.users insert` auto-creates profile in `public.users`. |
+| Supabase Auth | Cookie-based SSR sessions via `@supabase/ssr`. Middleware refreshes sessions on every request. | DB trigger `on auth.users insert` auto-creates profile in `public.video_users`. |
 | Supabase Storage | Used for permanent video storage. Access via signed URLs (server) or proxy route (client). | Bucket must be configured with RLS: users can only read their own folder. |
 | n8n (optional) | `N8N_WEBHOOK_URL` env var — called as an async callback after video completion | Secondary completion path; not the primary. Can be used for notifications, post-processing triggers. |
 

@@ -11,7 +11,7 @@ The prompt management system consists of two main features:
 
 ## Database Tables
 
-### `prompt_settings`
+### `video_prompt_settings`
 Stores the default prefix prompt that gets added to all user prompts.
 
 **Columns:**
@@ -71,12 +71,12 @@ To update the default prefix prompt, run this SQL in your Supabase SQL editor:
 
 ```sql
 -- Deactivate the current active prompt
-UPDATE public.prompt_settings
+UPDATE public.video_prompt_settings
 SET is_active = false
 WHERE is_active = true;
 
 -- Insert a new active prefix prompt
-INSERT INTO public.prompt_settings (prefix_prompt, is_active, description)
+INSERT INTO public.video_prompt_settings (prefix_prompt, is_active, description)
 VALUES (
   'Your new prefix prompt text here. This will be prepended to all user prompts.',
   true,
@@ -88,7 +88,7 @@ VALUES (
 
 ```sql
 -- High-quality cinematic focus
-INSERT INTO public.prompt_settings (prefix_prompt, is_active, description)
+INSERT INTO public.video_prompt_settings (prefix_prompt, is_active, description)
 VALUES (
   'Create a high-quality, cinematic video with smooth motion, professional lighting, and excellent composition. The video should be visually stunning and engaging.',
   true,
@@ -96,7 +96,7 @@ VALUES (
 );
 
 -- More detailed technical instructions
-INSERT INTO public.prompt_settings (prefix_prompt, is_active, description)
+INSERT INTO public.video_prompt_settings (prefix_prompt, is_active, description)
 VALUES (
   'Generate a professional video with: smooth camera movements, natural lighting, high detail, cinematic composition, and realistic physics. Ensure the video is visually appealing and maintains consistency throughout.',
   true,
@@ -199,7 +199,7 @@ WHERE title = 'City Life';
 
 1. Check that there's an active prompt setting:
    ```sql
-   SELECT * FROM public.prompt_settings WHERE is_active = true;
+   SELECT * FROM public.video_prompt_settings WHERE is_active = true;
    ```
 
 2. Check the API logs for errors fetching the prefix
