@@ -100,7 +100,7 @@
     "second": "segundo",
     "seconds": "segundos",
     "model": "Modelo",
-    "creditsPerVideo": "{count} crédito{plural} por video de 8 segundos",
+    "creditsPerVideo": "{count} crédito{plural} por video de {duration} segundos",
     "dimensions": "Dimensiones",
     "landscape": "Horizontal",
     "portrait": "Vertical",

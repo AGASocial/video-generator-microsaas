@@ -572,7 +572,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  {t('creditsPerVideo', { count: creditCost, plural: creditCost > 1 ? 's' : '' })}
+                  {t('creditsPerVideo', { count: creditCost, plural: creditCost > 1 ? 's' : '', duration })}
                 </p>
               </div>
 
