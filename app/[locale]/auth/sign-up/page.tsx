@@ -60,7 +60,7 @@ export default function SignUpPage() {
         throw new Error(data.error || "Failed to create account");
       }
 
-      router.push("/auth/sign-up-success");
+      router.push(`/${locale}/auth/sign-up-success`);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
