@@ -224,6 +224,17 @@
       "email": "Correo electrónico",
       "password": "Contraseña",
       "confirmPassword": "Confirmar contraseña"
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "description": "Ingresa una nueva contraseña para tu cuenta",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "submit": "Actualizar contraseña",
+      "updating": "Actualizando...",
+      "success": "Contraseña actualizada correctamente. Ya puedes iniciar sesión.",
+      "error": "No se pudo actualizar la contraseña. El enlace puede haber expirado.",
+      "passwordMismatch": "Las contraseñas no coinciden"
     }
   },
   "profile": {
@@ -247,5 +258,14 @@
   },
   "videoList": {
     "noVideosYet": "Aún no hay videos"
+  },
+  "errors": {
+    "kling": {
+      "rateLimit": "Has alcanzado el límite de solicitudes. Por favor, intenta nuevamente en unos minutos.",
+      "contentPolicy": "Tu solicitud fue rechazada por la política de contenido. Por favor, modifica el prompt e intenta nuevamente.",
+      "modelUnavailable": "El modelo de generación de video no está disponible temporalmente. Por favor, intenta nuevamente en unos minutos.",
+      "generationFailed": "La generación de video falló. Por favor, intenta nuevamente.",
+      "unknownError": "Ocurrió un error al generar el video. Por favor, intenta nuevamente."
+    }
   }
 }

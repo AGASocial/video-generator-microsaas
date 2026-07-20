@@ -14,7 +14,7 @@ export async function ensureUserExists(userId: string, email: string) {
     
     // First, try to get the user with the regular client
     const { data: existingUser } = await supabase
-      .from("users")
+      .from("video_users")
       .select("*")
       .eq("id", userId)
       .single();
@@ -40,7 +40,7 @@ export async function ensureUserExists(userId: string, email: string) {
     );
 
     const { data: newUser, error: createError } = await serviceSupabase
-      .from("users")
+      .from("video_users")
       .insert({
         id: userId,
         email: email,

@@ -1,3 +1,9 @@
+-- NOTE: this Supabase project is shared with another app that also owns a
+-- trigger named on_auth_user_created on auth.users. Do not re-run the DROP/CREATE
+-- below expecting it to be safe — see 012_add_isolated_video_users_trigger.sql
+-- (trigger: on_auth_video_user_created) for the isolated, collision-safe version
+-- that supersedes this file going forward.
+
 -- Create function to auto-create user profile on signup
 create or replace function public.handle_new_user()
 returns trigger
@@ -6,7 +12,7 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.users (id, email, credits)
+  insert into public.video_users (id, email, credits)
   values (
     new.id,
     new.email,

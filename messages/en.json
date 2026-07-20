@@ -224,6 +224,17 @@
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password"
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Enter a new password for your account",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Update password",
+      "updating": "Updating...",
+      "success": "Password updated successfully. You can now sign in.",
+      "error": "Failed to update password. The reset link may have expired.",
+      "passwordMismatch": "Passwords do not match"
     }
   },
   "profile": {
@@ -247,6 +258,15 @@
   },
   "videoList": {
     "noVideosYet": "No videos yet"
+  },
+  "errors": {
+    "kling": {
+      "rateLimit": "You have reached the request limit. Please try again in a few minutes.",
+      "contentPolicy": "Your request was rejected by the content policy. Please modify your prompt and try again.",
+      "modelUnavailable": "The video generation model is temporarily unavailable. Please try again in a few minutes.",
+      "generationFailed": "Video generation failed. Please try again.",
+      "unknownError": "An error occurred while generating the video. Please try again."
+    }
   }
 }
 

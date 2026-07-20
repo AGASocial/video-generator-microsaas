@@ -1,104 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getCreditCost } from "@/lib/products";
-import { downloadAndStoreVideoFromOpenAI } from "@/lib/video-storage";
+import { generateKlingToken } from "@/lib/kling-auth";
 
-// Background polling function for async video generation
-async function pollVideoStatus(videoId: string, soraVideoId: string, maxAttempts = 60) {
-  const supabase = await createClient();
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds between polls
-    attempts++;
-
-    try {
-      // Use correct OpenAI API endpoint for status check
-      const statusUrl = `https://api.openai.com/v1/videos/${soraVideoId}`;
-
-      const statusResponse = await fetch(statusUrl, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-      });
-
-      if (!statusResponse.ok) {
-        console.error(`[v0] Status check failed for video ${soraVideoId}`);
-        continue;
-      }
-
-      const statusData = await statusResponse.json();
-
-      // Check if video is ready
-      if (statusData.status === "completed") {
-        // Get user_id from video entry
-        const { data: videoEntry } = await supabase
-          .from("video_history")
-          .select("user_id")
-          .eq("id", videoId)
-          .single();
-
-        if (videoEntry?.user_id) {
-          // Download video from OpenAI and store in Supabase Storage
-          console.log(`[Polling] Downloading and storing video ${videoId} from OpenAI`);
-          const storageResult = await downloadAndStoreVideoFromOpenAI(
-            videoId,
-            soraVideoId,
-            videoEntry.user_id
-          );
-
-          if (storageResult.success) {
-            console.log(`[Polling] Video ${videoId} stored successfully at: ${storageResult.supabaseUrl}`);
-            // Status is already updated to "completed" by downloadAndStoreVideoFromOpenAI
-          } else {
-            console.error(`[Polling] Failed to store video ${videoId}:`, storageResult.error);
-            // Fallback: use proxy URL if storage fails
-            const proxyUrl = `/api/video/${videoId}/content`;
-            await supabase
-              .from("video_history")
-              .update({
-                video_url: proxyUrl,
-                status: "completed",
-              })
-              .eq("id", videoId);
-          }
-        } else {
-          // Fallback if user_id not found
-          const proxyUrl = `/api/video/${videoId}/content`;
-          await supabase
-            .from("video_history")
-            .update({
-              video_url: proxyUrl,
-              status: "completed",
-            })
-            .eq("id", videoId);
-        }
-        return;
-      } else if (statusData.status === "failed") {
-        // Update video entry with failed status
-        await supabase
-          .from("video_history")
-          .update({
-            status: "failed",
-          })
-          .eq("id", videoId);
-        return;
-      }
-      // If still processing, continue polling
-    } catch (error) {
-      console.error(`[v0] Error polling video status:`, error);
-    }
-  }
-
-  // Max attempts reached - mark as failed
-  await supabase
-    .from("video_history")
-    .update({
-      status: "failed",
-    })
-    .eq("id", videoId);
-}
+// Allowed model names for Kling AI (T-03-01: model validation)
+const ALLOWED_MODELS = ["kling-v1", "kling-v1-5", "kling-v2"] as const;
+type AllowedModel = typeof ALLOWED_MODELS[number];
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Get user data to check credits
     const { data: user, error: userError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("*")
       .eq("id", authUser.id)
       .single();
@@ -146,11 +53,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // T-03-01: Validate model is an allowed Kling model name
+    if (!ALLOWED_MODELS.includes(model as AllowedModel)) {
+      return NextResponse.json(
+        { error: "Invalid model. Allowed models: kling-v1, kling-v1-5, kling-v2" },
+        { status: 400 }
+      );
+    }
+
     // Fetch active prefix prompt from database
     let finalPrompt = userPrompt;
     try {
       const { data: promptSetting, error: promptError } = await supabase
-        .from("prompt_settings")
+        .from("video_prompt_settings")
         .select("prefix_prompt")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -175,7 +90,7 @@ export async function POST(request: NextRequest) {
     // Check if user has enough credits
     if (user.credits < creditCost) {
       return NextResponse.json(
-        { 
+        {
           error: "Insufficient credits",
           required: creditCost,
           available: user.credits
@@ -187,7 +102,7 @@ export async function POST(request: NextRequest) {
     let imageBinary: Buffer | null = null;
     let imageMimeType: string | null = null;
     if (imageFile) {
-      console.log("[API] Received image file:", {
+      console.log("[Kling] Received image file:", {
         name: imageFile.name,
         type: imageFile.type,
         size: imageFile.size,
@@ -195,223 +110,188 @@ export async function POST(request: NextRequest) {
       const arrayBuffer = await imageFile.arrayBuffer();
       imageBinary = Buffer.from(arrayBuffer);
       imageMimeType = imageFile.type || 'image/jpeg';
-      console.log("[API] Image binary size:", imageBinary.length, "bytes");
+      console.log("[Kling] Image binary size:", imageBinary.length, "bytes");
     } else {
-      console.log("[API] No image file received");
+      console.log("[Kling] No image file received");
     }
 
-    // Deduct credits based on model
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ credits: user.credits - creditCost })
-      .eq("id", authUser.id);
+    // D-02: Atomic credit deduction + video_history creation via Supabase RPC
+    // Single transaction — if either operation fails, both roll back (no partial state)
+    const { data: videoEntryJson, error: rpcError } = await supabase.rpc(
+      "deduct_credits_and_create_video",
+      {
+        p_user_id: authUser.id,
+        p_credit_cost: creditCost,
+        p_prompt: userPrompt,
+        p_duration: duration,
+        p_model: model,
+        p_image_url: imageFile ? imageFile.name : null,
+      }
+    );
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to deduct credits" },
-        { status: 500 }
-      );
+    if (rpcError) {
+      console.error("[AtomicDeduction] RPC failed:", { error: rpcError.message, userId: authUser.id });
+      if (rpcError.message.includes("insufficient_credits")) {
+        return NextResponse.json(
+          { error: "Insufficient credits", required: creditCost, available: user.credits },
+          { status: 402 }
+        );
+      }
+      if (rpcError.message.includes("user_not_found")) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Failed to start generation" }, { status: 500 });
     }
 
-    // Create video history entry first (before API call)
-    // Store the original user prompt (not the final prompt with prefix)
-    const { data: videoEntry, error: videoError } = await supabase
-      .from("video_history")
-      .insert({
-        user_id: authUser.id,
-        prompt: userPrompt, // Store original user prompt, not the final one with prefix
-        image_url: imageFile ? imageFile.name : null,
-        duration,
-        model,
-        status: "processing",
-      })
-      .select()
-      .single();
+    // RPC returns json — parse into typed object for downstream use
+    const videoEntry = videoEntryJson as {
+      id: string;
+      user_id: string;
+      prompt: string;
+      image_url: string | null;
+      duration: number;
+      model: string;
+      status: string;
+      credit_cost: number;
+      created_at: string;
+    };
 
-    if (videoError) {
-      console.error("[v0] Video history error:", videoError);
-      // Refund credit if we failed to create entry
-      await supabase
-        .from("users")
-        .update({ credits: user.credits })
-        .eq("id", authUser.id);
-      return NextResponse.json(
-        { error: "Failed to create video entry" },
-        { status: 500 }
-      );
-    }
+    console.log("[AtomicDeduction] Credits deducted and video entry created:", {
+      videoId: videoEntry.id,
+      userId: authUser.id,
+      creditCost,
+    });
 
-    // Use correct OpenAI API endpoint for video generation
-    const openaiApiUrl = process.env.OPENAI_API_URL || "https://api.openai.com/v1/videos";
-    
-    // Check if API key is set
-    if (!process.env.OPENAI_API_KEY) {
-      console.error("[v0] OPENAI_API_KEY is not set");
-      return NextResponse.json(
-        { error: "OpenAI API key is not configured" },
-        { status: 500 }
-      );
-    }
-    
+    // Kling API endpoint (per KLING-API-NOTES.md Q4 / RESEARCH.md Pattern 2)
+    const klingApiUrl = process.env.KLING_API_URL || "https://api.klingai.com";
+
     try {
-      console.log("[v0] Sending request to OpenAI:", {
-        url: openaiApiUrl,
+      let klingToken: string;
+      try {
+        klingToken = generateKlingToken();
+      } catch (tokenError) {
+        console.error("[Kling] Failed to generate auth token:", tokenError);
+        await supabase
+          .from("video_history")
+          .update({ status: "failed" })
+          .eq("id", videoEntry.id);
+        return NextResponse.json(
+          { error: "errors.kling.unknownError" },
+          { status: 500 }
+        );
+      }
+
+      console.log("[Kling] Sending request to Kling API:", {
+        url: klingApiUrl,
         model: model,
-        size: size,
         duration: duration,
         hasImage: !!imageBinary,
       });
 
-      let openaiResponse: Response;
-      
-      // OpenAI Sora API expects multipart/form-data when image is provided
-      if (imageBinary && imageFile) {
-        console.log("[API] Sending request with image reference");
-        // Use FormData for requests with images
-        const formData = new FormData();
-        formData.append("prompt", finalPrompt); // Use final prompt with prefix
-        formData.append("model", model);
-        formData.append("size", size);
-        formData.append("seconds", duration.toString());
-        
-        // Convert Buffer to Blob for FormData
-        // Buffer needs to be converted to Uint8Array for Blob
-        const imageUint8Array = new Uint8Array(imageBinary);
-        const imageBlob = new Blob([imageUint8Array], { type: imageMimeType || 'image/jpeg' });
-        const fileName = imageFile.name || "reference.jpg";
-        console.log("[API] Appending image to OpenAI request:", {
-          fileName,
-          blobSize: imageBlob.size,
-          mimeType: imageMimeType,
-        });
-        formData.append("input_reference", imageBlob, fileName);
+      // Map size param to Kling aspect_ratio (portrait → "9:16", landscape/default → "16:9")
+      const aspectRatio = size === "portrait" ? "9:16" : "16:9";
 
-        openaiResponse = await fetch(openaiApiUrl, {
+      let klingResponse: Response;
+
+      if (imageBinary && imageFile) {
+        // Image-to-video: POST /v1/videos/image2video
+        // Field name confirmed from KLING-API-NOTES.md Q4:
+        // "image" for base64-encoded content (used here since we have binary in memory)
+        // "image_url" for a publicly accessible URL (preferred when image is in Supabase Storage)
+        // Using base64 here as the image has not yet been uploaded to Supabase Storage
+        const imageBase64 = imageBinary.toString("base64");
+        const imageDataUrl = `data:${imageMimeType || "image/jpeg"};base64,${imageBase64}`;
+
+        klingResponse = await fetch(`${klingApiUrl}/v1/videos/image2video`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-            // Don't set Content-Type header - browser will set it with boundary for FormData
+            "Authorization": `Bearer ${klingToken}`,
+            "Content-Type": "application/json",
           },
-          body: formData,
+          body: JSON.stringify({
+            model_name: model,
+            prompt: finalPrompt,
+            duration: duration,
+            aspect_ratio: aspectRatio,
+            image: imageDataUrl, // base64 data URL (KLING-API-NOTES.md Q4 confirmed field name)
+            callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook/video-complete`,
+          }),
         });
       } else {
-        // Use JSON for requests without images
-        const requestBody = {
-          prompt: finalPrompt, // Use final prompt with prefix
-          model: model,
-          size: size,
-          seconds: duration.toString(), // API expects string, not integer
-        };
-
-        openaiResponse = await fetch(openaiApiUrl, {
+        // Text-to-video: POST /v1/videos/text2video
+        klingResponse = await fetch(`${klingApiUrl}/v1/videos/text2video`, {
           method: "POST",
           headers: {
+            "Authorization": `Bearer ${klingToken}`,
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
           },
-          body: JSON.stringify(requestBody),
+          body: JSON.stringify({
+            model_name: model,
+            prompt: finalPrompt,
+            duration: duration,
+            aspect_ratio: aspectRatio,
+            callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook/video-complete`,
+          }),
         });
       }
 
-      if (!openaiResponse.ok) {
-        const errorText = await openaiResponse.text();
-        console.error("[v0] OpenAI API failed:", errorText);
-        let errorMessage = "OpenAI API request failed";
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error?.message || errorJson.message || errorText;
-        } catch {
-          errorMessage = errorText || "OpenAI API request failed";
+      if (!klingResponse.ok) {
+        const errorText = await klingResponse.text();
+        console.error("[Kling] Kling API failed:", { status: klingResponse.status, body: errorText });
+
+        // Map Kling error codes to i18n keys (per ERR-01, T-03-03)
+        // T-03-03: Return i18n key only — never expose raw Kling error body to client
+        let errorKey: string;
+        if (klingResponse.status === 429) {
+          errorKey = "errors.kling.rateLimit";
+        } else if (klingResponse.status === 400 && errorText.toLowerCase().includes("content")) {
+          errorKey = "errors.kling.contentPolicy";
+        } else if (klingResponse.status === 503 || klingResponse.status === 502) {
+          errorKey = "errors.kling.modelUnavailable";
+        } else {
+          errorKey = "errors.kling.unknownError";
         }
-        throw new Error(errorMessage);
+
+        throw new Error(errorKey);
       }
 
-      const openaiData = await openaiResponse.json();
-      console.log("[v0] OpenAI response:", openaiData);
+      const klingData = await klingResponse.json();
+      console.log("[Kling] Kling API response:", { code: klingData.code, taskId: klingData.data?.task_id });
 
-      // OpenAI returns a video object with id (sora_video_id) and status
-      // Response format: { id: "sora_video_id", status: "processing" | "completed", ... }
-      
-      const soraVideoId = openaiData.id;
-      
-      if (!soraVideoId) {
-        throw new Error("No video ID returned from OpenAI");
+      const taskId = klingData.data?.task_id;
+      if (!taskId) {
+        console.error("[Kling] No task_id returned from Kling API:", klingData);
+        throw new Error("errors.kling.unknownError");
       }
 
-      // Store sora_video_id in job_id column (reusing existing column)
+      // Store Kling task_id in job_id column — always status: "processing" (Kling is always async)
       await supabase
         .from("video_history")
         .update({
-          job_id: soraVideoId,
-          status: openaiData.status || "processing",
+          job_id: taskId,
+          status: "processing",
         })
         .eq("id", videoEntry.id);
 
-      if (openaiData.status === "completed") {
-        // Video is already complete - download and store in Supabase
-        console.log(`[Generate] Video ${videoEntry.id} is already complete, storing in Supabase`);
-        const storageResult = await downloadAndStoreVideoFromOpenAI(
-          videoEntry.id,
-          soraVideoId,
-          authUser.id
-        );
+      return NextResponse.json({
+        success: true,
+        videoId: videoEntry.id,
+        message: "Video generation started",
+        status: "processing",
+        videoUrl: null,
+      });
+    } catch (klingError) {
+      console.error("[Kling] Kling API error:", klingError);
 
-        let finalVideoUrl: string;
-        if (storageResult.success && storageResult.supabaseUrl) {
-          finalVideoUrl = storageResult.supabaseUrl;
-          console.log(`[Generate] Video stored successfully at: ${finalVideoUrl}`);
-          // Status is already updated to "completed" by downloadAndStoreVideoFromOpenAI
-        } else {
-          // Fallback to proxy URL if storage fails
-          console.warn(`[Generate] Storage failed, using proxy URL as fallback`);
-          finalVideoUrl = `/api/video/${videoEntry.id}/content`;
-          // Update status to completed even if storage failed
-          await supabase
-            .from("video_history")
-            .update({
-              video_url: finalVideoUrl,
-              status: "completed",
-            })
-            .eq("id", videoEntry.id);
-        }
+      const errorMessage = klingError instanceof Error
+        ? klingError.message
+        : "errors.kling.unknownError";
 
-        return NextResponse.json({
-          success: true,
-          videoId: videoEntry.id,
-          message: "Video generated successfully",
-          status: "completed",
-          videoUrl: finalVideoUrl,
-        });
-      } else {
-        // Video is processing - start background polling
-        pollVideoStatus(videoEntry.id, soraVideoId).catch(console.error);
-
-        return NextResponse.json({
-          success: true,
-          videoId: videoEntry.id,
-          message: "Video generation started",
-          status: "processing",
-          videoUrl: null,
-        });
-      }
-    } catch (openaiError) {
-      console.error("[v0] OpenAI API error:", openaiError);
-      
-      const errorMessage = openaiError instanceof Error 
-        ? openaiError.message 
-        : "Failed to generate video";
-      
-      // Update status to failed and refund credit
+      // Update status to failed (D-03: no credit refund on API errors — refund is webhook-only)
       await supabase
         .from("video_history")
         .update({ status: "failed" })
         .eq("id", videoEntry.id);
-      
-      // Refund the credits
-      await supabase
-        .from("users")
-        .update({ credits: user.credits })
-        .eq("id", authUser.id);
 
       return NextResponse.json(
         { error: errorMessage },
@@ -419,9 +299,9 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("[v0] Generate API error:", error);
-    const errorMessage = error instanceof Error 
-      ? error.message 
+    console.error("[Kling] Generate API error:", error);
+    const errorMessage = error instanceof Error
+      ? error.message
       : "Internal server error";
     return NextResponse.json(
       { error: errorMessage },

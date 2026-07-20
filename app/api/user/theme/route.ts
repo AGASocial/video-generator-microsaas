@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's theme preference from database
     const { data: userData, error: userError } = await supabase
-      .from("users")
+      .from("video_users")
       .select("theme_preference")
       .eq("id", authUser.id)
       .single();
@@ -70,7 +70,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update user's theme preference
     const { data: userData, error: updateError } = await supabase
-      .from("users")
+      .from("video_users")
       .update({ theme_preference: theme })
       .eq("id", authUser.id)
       .select("theme_preference")

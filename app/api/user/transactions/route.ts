@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const ascending = searchParams.get("ascending") === "true";
 
     const { data: transactions, error: transactionsError } = await supabase
-      .from("transactions")
+      .from("video_transactions")
       .select("*")
       .eq("user_id", user.id)
       .order(order, { ascending })

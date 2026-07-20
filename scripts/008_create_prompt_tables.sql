@@ -1,6 +1,6 @@
--- Create prompt_settings table for storing default prefix prompts
+-- Create video_prompt_settings table for storing default prefix prompts
 -- This allows adjusting the prefix prompt on the fly without code changes
-create table if not exists public.prompt_settings (
+create table if not exists public.video_prompt_settings (
   id uuid primary key default gen_random_uuid(),
   prefix_prompt text not null,
   is_active boolean not null default true,
@@ -9,13 +9,13 @@ create table if not exists public.prompt_settings (
   updated_at timestamp with time zone default now()
 );
 
--- Enable RLS on prompt_settings table
-alter table public.prompt_settings enable row level security;
+-- Enable RLS on video_prompt_settings table
+alter table public.video_prompt_settings enable row level security;
 
--- RLS policies for prompt_settings table
+-- RLS policies for video_prompt_settings table
 -- Only authenticated users can read active settings
-create policy "prompt_settings_select_active"
-  on public.prompt_settings for select
+create policy "video_prompt_settings_select_active"
+  on public.video_prompt_settings for select
   using (auth.role() = 'authenticated' and is_active = true);
 
 -- Note: For insert/update operations, you'll need to use the Supabase dashboard
@@ -51,11 +51,11 @@ create policy "predefined_prompts_select_active"
 -- create an admin API endpoint with service role key.
 
 -- Create index for faster lookups
-create index if not exists idx_prompt_settings_active on public.prompt_settings(is_active) where is_active = true;
+create index if not exists idx_video_prompt_settings_active on public.video_prompt_settings(is_active) where is_active = true;
 create index if not exists idx_predefined_prompts_active on public.predefined_prompts(is_active, display_order) where is_active = true;
 
 -- Insert default prefix prompt (you can update this later via admin)
-insert into public.prompt_settings (prefix_prompt, is_active, description)
+insert into public.video_prompt_settings (prefix_prompt, is_active, description)
 values (
   'Create a high-quality, cinematic video with smooth motion, professional lighting, and excellent composition. The video should be visually stunning and engaging.',
   true,

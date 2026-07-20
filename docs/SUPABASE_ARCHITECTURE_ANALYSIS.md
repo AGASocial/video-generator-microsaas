@@ -79,7 +79,7 @@ Most API routes use the server Supabase client (anon key):
 - **File**: `app/api/generate/route.ts`
   - `supabase.auth.getUser()` - Verify authentication
   - `supabase.from('users').select()` - Get user credits
-  - `supabase.from('prompt_settings').select()` - Get prompt settings
+  - `supabase.from('video_prompt_settings').select()` - Get prompt settings
   - `supabase.from('users').update()` - Deduct credits
   - `supabase.from('video_history').insert()` - Create video entry
   - `supabase.from('video_history').update()` - Update video status
