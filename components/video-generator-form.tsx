@@ -37,6 +37,23 @@ interface VideoGeneratorFormProps {
 
 export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
   const t = useTranslations('form');
+  const tRoot = useTranslations();
+
+  // API error responses are sometimes i18n keys (e.g. "errors.kling.rateLimit" —
+  // see app/api/generate/route.ts T-03-03, which intentionally returns keys
+  // instead of raw Kling error bodies) and sometimes plain strings. Translate
+  // only when it looks like a key so plain messages still pass through as-is.
+  const translateApiError = (message: string): string => {
+    if (message.startsWith("errors.")) {
+      try {
+        return tRoot(message as Parameters<typeof tRoot>[0]);
+      } catch {
+        return message;
+      }
+    }
+    return message;
+  };
+
   const [prompt, setPrompt] = useState("");
   const [selectedPredefinedPrompt, setSelectedPredefinedPrompt] = useState<string>("");
   const [predefinedPrompts, setPredefinedPrompts] = useState<PredefinedPrompt[]>([]);
@@ -348,7 +365,7 @@ export function VideoGeneratorForm({ userCredits }: VideoGeneratorFormProps) {
         router.push("/profile");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('generationFailedDesc');
+      const errorMessage = err instanceof Error ? translateApiError(err.message) : t('generationFailedDesc');
       setError(errorMessage);
       toast({
         title: t('generationFailed'),

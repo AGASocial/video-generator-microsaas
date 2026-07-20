@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getCreditCost } from "@/lib/products";
 import { generateKlingToken } from "@/lib/kling-auth";
 
 // Allowed model names for Kling AI (T-03-01: model validation)
 const ALLOWED_MODELS = ["kling-v1", "kling-v1-5", "kling-v2"] as const;
 type AllowedModel = typeof ALLOWED_MODELS[number];
+
+// Refunds credits for a video that failed before Kling ever returned a task_id.
+// Safe to call unconditionally in these paths — no task means no webhook will
+// ever arrive to trigger the normal webhook-only refund (D-03), so without this
+// the deduction would be permanently unrecoverable. Uses the service-role client
+// since refund_video_credits is only granted to service_role (see scripts/011).
+async function refundCreditsForNeverStartedTask(userId: string, amount: number) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[Kling] Cannot refund credits — SUPABASE_SERVICE_ROLE_KEY not configured");
+    return;
+  }
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+  const { error } = await serviceSupabase.rpc("refund_video_credits", {
+    p_user_id: userId,
+    p_amount: amount,
+  });
+  if (error) {
+    console.error("[Kling] Refund RPC failed for never-started task:", { userId, amount, error: error.message });
+  } else {
+    console.log("[Kling] Refunded credits for never-started task:", { userId, amount });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -175,6 +202,7 @@ export async function POST(request: NextRequest) {
           .from("video_history")
           .update({ status: "failed" })
           .eq("id", videoEntry.id);
+        await refundCreditsForNeverStartedTask(authUser.id, creditCost);
         return NextResponse.json(
           { error: "errors.kling.unknownError" },
           { status: 500 }
@@ -287,11 +315,15 @@ export async function POST(request: NextRequest) {
         ? klingError.message
         : "errors.kling.unknownError";
 
-      // Update status to failed (D-03: no credit refund on API errors — refund is webhook-only)
+      // D-03 (revised): webhook-only refund only applies once a task exists. Every
+      // error path in this block (Kling rejected the request, or returned no
+      // task_id) means no task was ever created — no webhook can ever arrive, so
+      // refund here or the deduction is unrecoverable.
       await supabase
         .from("video_history")
         .update({ status: "failed" })
         .eq("id", videoEntry.id);
+      await refundCreditsForNeverStartedTask(authUser.id, creditCost);
 
       return NextResponse.json(
         { error: errorMessage },
